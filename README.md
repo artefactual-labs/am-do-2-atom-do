@@ -1,5 +1,5 @@
 # Am-do-2-atom-do
-A script to update AtoM 2.7 digital object metadata from related Archivematica metadata.
+A script to enable AtoM-wide enhanced digital object metadata display by updating AtoM 2.7 digital object metadata using related Archivematica metadata.
 
 # Background
 Digital object metadata in AtoM is confusing. It's not clear which file representation the information is referring to. This is particularly true if the digital object was uploaded from Archivematica and therefore may have an original format and preservation copy in Archivematica as well as a "master", "reference" and "thumbnail" representation in AtoM.
