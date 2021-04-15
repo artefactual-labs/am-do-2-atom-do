@@ -16,6 +16,6 @@ The enhanced display includes more information per representation and the abilit
 
 ![image](https://user-images.githubusercontent.com/672121/114941839-81333880-9df8-11eb-8bf2-d330afeba688.png)
 
-The enhanced digital object metadata feature will work for users of integrated Archivematica and AtoM installations from release 2.7 forward. All the digital objects they may have ingested into Archivematica and described in AtoM prior to the upgrade will not be displayed.
+The enhanced digital object metadata feature will work for users of integrated Archivematica and AtoM installations from release 2.7 forward. All the digital objects they may have ingested into Archivematica and described in AtoM prior to the upgrade will not be displayed. That's the gap this script is intended to address.
 
 # Methodology
