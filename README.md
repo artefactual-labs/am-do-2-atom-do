@@ -12,7 +12,7 @@ This was the reason to introduce [enhanced digital object metadata display](http
 
 ![image](https://user-images.githubusercontent.com/672121/114941560-2dc0ea80-9df8-11eb-931b-bdb2e464baf5.png)
 
-The enhanced display includes more information per representation and the ability to download the AIP and original file in Archivematica if the user has permission and if the metadata to facilitate that request is present in the first place. That's what this script is for.
+The enhanced display includes more information per representation and the ability to download the AIP and original file in Archivematica if the user has permission and if the metadata to facilitate that request is present in the first place. 
 
 ![image](https://user-images.githubusercontent.com/672121/114941839-81333880-9df8-11eb-8bf2-d330afeba688.png)
 
