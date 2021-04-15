@@ -1,4 +1,4 @@
-# Am-do-2-atom-do
+# am-do-2-atom-do
 A script to enable AtoM-wide enhanced digital object metadata display by updating AtoM 2.7 digital object metadata using related Archivematica metadata.
 
 # Background
