@@ -1,5 +1,5 @@
 # am-do-2-atom-do
-A script to enable AtoM-wide enhanced digital object metadata display by updating AtoM 2.7 digital object metadata using related Archivematica metadata.
+The purpose of this script is to update all the legacy data in AtoM 2.7 installations with related Archivematica metadata. This will enable the enhanced digital object metadata feature for all the digital objects in AtoM.
 
 # Background
 Digital object metadata in AtoM is confusing. It's not clear which file representation the information is referring to. This is particularly true if the digital object was uploaded from Archivematica and therefore may have an original format and preservation copy in Archivematica as well as a "master", "reference" and "thumbnail" representation in AtoM.
@@ -17,9 +17,5 @@ The enhanced display includes more information per representation and the abilit
 ![image](https://user-images.githubusercontent.com/672121/114941839-81333880-9df8-11eb-8bf2-d330afeba688.png)
 
 The enhanced digital object metadata feature will work for users of integrated Archivematica and AtoM installations from release 2.7 forward. All the digital objects they may have ingested into Archivematica and described in AtoM prior to the upgrade will not be displayed.
-
-# Purpose
-
-The purpose of this script is to update all the legacy data in AtoM 2.7 installations with related Archivematica metadata to enable the enhanced digital object metadata feature for all the digital objects in the system.
 
 # Methodology
