@@ -7,7 +7,7 @@ Digital object metadata in AtoM is confusing. It's not clear which file represen
 <img width="1180" alt="AtoM3 6-dip-upload" src="https://user-images.githubusercontent.com/672121/114940877-4381e000-9df7-11eb-927b-34546ae097d9.png">
 
 
-This was the reason to introduce [enhanced digital object metadata display](https://www.accesstomemory.org/en/docs/2.7/user-manual/import-export/upload-digital-object/#digital-object-metadata) in AtoM 2.7.
+This was the reason [enhanced digital object metadata display](https://www.accesstomemory.org/en/docs/2.7/user-manual/import-export/upload-digital-object/#digital-object-metadata) was introduced in AtoM 2.7.
 
 
 ![image](https://user-images.githubusercontent.com/672121/114941560-2dc0ea80-9df8-11eb-931b-bdb2e464baf5.png)
