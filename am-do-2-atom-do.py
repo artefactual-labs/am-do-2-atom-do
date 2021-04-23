@@ -19,6 +19,10 @@ def main():
     mysqlCursor.execute(sql)
     mysqlConnection.commit()
 
+    # Create a working directory for downloading METS files.
+
+
+
     # Select all the legacy DIP files so that their properties can be updated.
     sql = "SELECT * FROM property WHERE name='objectUUID' AND scope is NULL;"
     mysqlCursor.execute(sql)
@@ -70,6 +74,14 @@ def main():
             print("Unable to flush existing property values for object# " + str(file['id']) + ". Skipping...")
             print(e)
             continue
+
+        # get all properties for this digital file from the AIP METS file
+        # check if the METS file has been downloaded already
+        # download the METS file
+        # parse the METS file for the property info
+        # write the values to the working table
+        # loop over the working table values and enter updated property values
+        # delete working table. delete METS directory.
 
 if __name__ == "__main__":
     main()
