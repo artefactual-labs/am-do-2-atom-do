@@ -1,8 +1,13 @@
 # am-do-2-atom-do
 The purpose of this script is to update all the legacy data in AtoM 2.7 installations with related Archivematica metadata. This will enable the enhanced digital object metadata and AIP/file download feature for all the pre-2.7 digital objects in AtoM (that were uploaded via Archivematica).
 
+* [Background](#background)
+* [Methodology](#methodology)
+* [Instructions](#instructions)
+* [Notes](#notes)
+
 # Background
-Digital object metadata in AtoM is confusing. It's not clear which file representation the information is referring to. This is particularly true if the digital object was uploaded from Archivematica and therefore may have an original format and preservation copy in Archivematica as well as a "master", "reference" and "thumbnail" representation in AtoM.
+Prior to release 2.7, digital object metadata dislay in AtoM was confusing. It was not clear which file representation the presented information is referring to. This is particularly true if the digital object was uploaded from Archivematica and therefore may have an original format and preservation copy in Archivematica as well as a "master", "reference" and "thumbnail" representation in AtoM.
 
 <img width="1180" alt="AtoM3 6-dip-upload" src="images/legacy_do.png">
 
@@ -30,8 +35,9 @@ The enhanced digital object metadata feature will work for users of integrated A
 8. Report on number of records updated.
 9. Delete temporary METS download folder and MySQL working table.
 
-# Notes
+# Instructions
 
+# Notes
 
 All the fields for the AtoM `property` and `property_i18n` tables:
 ![image](images/property_tables_mysql.png)
