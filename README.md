@@ -1,5 +1,5 @@
 # am-do-2-atom-do
-The purpose of this script is to update all the legacy data in AtoM 2.7 installations with related Archivematica metadata. This will enable the enhanced digital object metadata and AIP/file download feature for all those pre-2.7 digital objects that were uploaded into AtoM from Archivematica.
+The purpose of this script is to update the metadata for all digital objects that were uploaded into AtoM from Archivematica before an AtoM 2.7 upgrade. This will enable the AtoM 2.7 enhanced digital object metadata and AIP/file download feature for all these "legacy" digital objects.
 
 * [Background](#background)
 * [Methodology](#methodology)
