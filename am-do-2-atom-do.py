@@ -26,10 +26,14 @@ mysqlConnection = pymysql.connect(
 )
 mysqlCursor = mysqlConnection.cursor()
 
-# Create a working table for transferring the legacy DIP file properties.
-sql = "CREATE TABLE IF NOT EXISTS dip_files(object_id INTEGER PRIMARY KEY, object_uuid TEXT, aip_uuid TEXT);"
-mysqlCursor.execute(sql)
-mysqlConnection.commit()
+try:
+    # Create a working table for transferring the legacy DIP file properties.
+    sql = "CREATE TABLE IF NOT EXISTS dip_files(object_id INTEGER PRIMARY KEY, object_uuid TEXT, aip_uuid TEXT);"
+    mysqlCursor.execute(sql)
+    mysqlConnection.commit()
+except Exception as e:
+    print("Unable to create working table. Check MySQL connection parameters.")
+    print(e)
 
 
 def main():
@@ -39,7 +43,9 @@ def main():
     '''
 
     flush_legacy_digital_file_properties()
+
     update_digital_file_properties()
+
     delete_temporary_files()
 
 
@@ -129,8 +135,11 @@ def update_digital_file_properties():
 
 def get_mets_path(aip_uuid):
     request_url = STORAGE_SERVICE_URL + "file/" + aip_uuid +"?username=" + STORAGE_SERVICE_USER + "&api_key=" + STORAGE_SERVICE_API_KEY
-
-    response = requests.get(request_url)
+    try:
+        response = requests.get(request_url)
+    except Exception as e:
+        print("Unable to connect to Storage Service. Check your connection parameters.")
+        print(e)
     package = response.json()
 
     # build relative path to METS file
@@ -152,10 +161,6 @@ def get_mets_file(aip_uuid, relative_path):
     download_file = os.path.join(METS_DIR, mets_file)
     with open(download_file, "wb") as file:
         file.write(response.content)
-
-
-
-
 
 # delete working table. delete METS directory.
 
