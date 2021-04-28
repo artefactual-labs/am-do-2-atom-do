@@ -1,5 +1,6 @@
 
 import os
+import sys
 import pymysql.cursors
 import requests
 
@@ -15,16 +16,33 @@ METS_DIR = "DIP_METS/"
 if not os.path.exists(METS_DIR):
     os.makedirs(METS_DIR)
 
-# Configure AtoM MySQL connection.
-mysqlConnection = pymysql.connect(
-    host="localhost",
-    user="atom-user",
-    password="ATOMPASSWORD",
-    db="atom",
-    charset="utf8mb4",
-    cursorclass=pymysql.cursors.DictCursor,
-)
-mysqlCursor = mysqlConnection.cursor()
+# Test Storage Service connection
+try:
+    request_url = STORAGE_SERVICE_URL + "file/" + "?username=" + STORAGE_SERVICE_USER + "&api_key=" + STORAGE_SERVICE_API_KEY
+    response = requests.get(request_url)
+    if response.status_code != requests.codes.ok:
+        sys.exit("Unable to connect to Archivematica Storage Service. Please check your connection parameters.")
+    else:
+        print("Connected to Archivematica Storage Service.")
+except Exception as e:
+    print(e)
+    sys.exit("Unable to connect to Archivematica Storage Service. Please check your connection parameters.")
+
+# Set and test MySQL connection.
+try:
+    # Configure AtoM MySQL connection.
+    mysqlConnection = pymysql.connect(
+        host="localhost",
+        user="atom-user",
+        password="ATOMPASSWORD",
+        db="atom",
+        charset="utf8mb4",
+        cursorclass=pymysql.cursors.DictCursor,
+    )
+    mysqlCursor = mysqlConnection.cursor()
+except Exception as e:
+    print(e)
+    sys.exit("Unable to connect to the AtoM MySQL database. Please check your connection parameters.")
 
 try:
     # Create a working table for transferring the legacy DIP file properties.
@@ -32,8 +50,9 @@ try:
     mysqlCursor.execute(sql)
     mysqlConnection.commit()
 except Exception as e:
-    print("Unable to create working table. Check MySQL connection parameters.")
     print(e)
+    sys.exit("Unable to create working table. Check permissions for MySQL user.")
+
 
 
 def main():
@@ -42,11 +61,16 @@ def main():
     METS to take full advantage of the digital object metadata enhancement and AIP/file retrieval features.
     '''
 
+    '''
     flush_legacy_digital_file_properties()
 
     update_digital_file_properties()
 
     delete_temporary_files()
+    '''
+
+
+
 
 
 def flush_legacy_digital_file_properties():
