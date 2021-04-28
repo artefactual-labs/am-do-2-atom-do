@@ -40,6 +40,7 @@ try:
         cursorclass=pymysql.cursors.DictCursor,
     )
     mysqlCursor = mysqlConnection.cursor()
+    print("Connected to AtoM MySQL database.")
 except Exception as e:
     print(e)
     sys.exit("Unable to connect to the AtoM MySQL database. Please check your connection parameters.")
@@ -61,11 +62,14 @@ def main():
     METS to take full advantage of the digital object metadata enhancement and AIP/file retrieval features.
     '''
 
-    '''
+    print("Identifying legacy digital object records in AtoM.")
     flush_legacy_digital_file_properties()
 
+    '''
+    print("Parsing values from METS files and updating digital object records."
     update_digital_file_properties()
 
+    print("Cleaning up temporary files.")
     delete_temporary_files()
     '''
 
@@ -144,13 +148,16 @@ def update_digital_file_properties():
             try:
                 path = get_mets_path(file["aip_uuid"])
             except Exception as e:
-                print("Unable to derive relative path of METS file in " + file["aip_uuid"])
+                print("Unable to derive relative path of METS file in package " + file["aip_uuid"])
                 print(e)
+                continue
             try:
                 get_mets_file(file["aip_uuid"], path)
             except Exception as e:
-                print("Unable to fetch METS file for " + file["aip_uuid"])
+                print("Unable to fetch METS file for package " + file["aip_uuid"])
                 print(e)
+                continue
+
 
     # parse the METS file with METSRW for the property info values
     # write the values to the working table
@@ -158,7 +165,7 @@ def update_digital_file_properties():
 
 
 def get_mets_path(aip_uuid):
-    request_url = STORAGE_SERVICE_URL + "file/" + aip_uuid +"?username=" + STORAGE_SERVICE_USER + "&api_key=" + STORAGE_SERVICE_API_KEY
+    request_url = STORAGE_SERVICE_URL + "file/" + aip_uuid + "?username=" + STORAGE_SERVICE_USER + "&api_key=" + STORAGE_SERVICE_API_KEY
     try:
         response = requests.get(request_url)
     except Exception as e:
