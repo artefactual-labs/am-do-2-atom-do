@@ -26,7 +26,7 @@ The enhanced digital object metadata feature will work for users of integrated A
 # Methodology
 
 1. Run a query to identify all "legacy" digital object records in the AtoM MySQL database.
-2. Save these to a working table along with the file's AIP and FILE UUID in Archivematica.
+2. Save these to a new AtoM MySQL working table along with the file's AIP and FILE UUID from Archivematica.
 3. Information about digital objects loaded into AtoM via Archivematica is stored in the Properties table in AtoM. Rather than replace these one at a time and supplement them with missing data, this script simply flushes all property values for legacy digital objects and then adds all of the pre-existing and new property values in another pass.
 4. Download the METS file corresponding to the digital object from the Archivematica Storage Service.
 5. Parse the METS file for all the AtoM 2.7 digital object property values.
