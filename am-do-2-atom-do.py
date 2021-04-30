@@ -48,7 +48,7 @@ except Exception as e:
 
 try:
     # Create a working table for transferring the legacy DIP file properties.
-    sql = "CREATE TABLE IF NOT EXISTS dip_files(object_id INTEGER PRIMARY KEY, object_uuid TEXT, aip_uuid TEXT, originalFileIngestedAt TEXT, preservationCopyNormalizedAt TEXT, preservationCopyFileName TEXT, preservationCopyFileSize TEXT, relatedUuiD TEXT, relativePathWithinAip TEXT, aipName TEXT, originalFileName TEXT, originalFileSize TEXT, formatName TEXT, formatVersion TEXT, formatRegistryName TEXT, formatRegistryKey TEXT);"
+    sql = "CREATE TABLE IF NOT EXISTS dip_files(object_id INTEGER PRIMARY KEY, object_uuid TEXT, aip_uuid TEXT, originalFileIngestedAt TEXT, relativePathWithinAip TEXT, aipName TEXT, originalFileName TEXT, originalFileSize TEXT, formatName TEXT, formatVersion TEXT, formatRegistryName TEXT, formatRegistryKey TEXT, preservationCopyNormalizedAt TEXT, preservationCopyFileName TEXT, preservationCopyFileSize TEXT);"
     mysqlCursor.execute(sql)
     sql = "CREATE TABLE IF NOT EXISTS premis_events(id INTEGER PRIMARY KEY, object_id INTEGER, value TEXT);"
     mysqlCursor.execute(sql)
@@ -221,10 +221,6 @@ def parse_mets_values():
 
         # Initialize all properties to Null to avoid missing value errors.
         originalFileIngestedAt = None
-        preservationCopyNormalizedAt = None
-        preservationCopyFileName = None
-        preservationCopyFileSize = None
-        relatedUuiD = None
         relativePathWithinAip = None
         aipName = None
         originalFileName = None
@@ -233,6 +229,13 @@ def parse_mets_values():
         formatVersion = None
         formatRegistryName = None
         formatRegistryKey = None
+        preservationCopyNormalizedAt = None
+        preservationCopyFileName = None
+        preservationCopyFileSize = None
+
+        relativePathWithinAip = fsentry.path
+        aipName = transfer_name
+        originalFileName = fsentry.label
 
         for premis_event in fsentry.get_premis_events():
             if (premis_event.event_type) == "ingestion":
@@ -247,48 +250,24 @@ def parse_mets_values():
             '''
 
         for premis_object in fsentry.get_premis_objects():
-            if fsentry.use == "preservation":
-                try:
-                    preservationCopyFileName = fsentry.label
-                    preservationCopyFileSize = premis_object.size
-                    if str(premis_object.related_object_identifier_value) != "()":
-                        relatedUuid = premis_object.related_object_identifier_value
-                    if relatedUuid is not None:
-                        sql = "UPDATE dip_files SET preservationCopyFileName = %s, preservationCopyNormalizedAt = %s, preservationCopyFileSize = %s WHERE object_uuid = %s;"
-                        mysqlCursor.execute(sql, (preservationCopyFileName, preservationCopyNormalizedAt, preservationCopyFileSize, file["object_uuid"]))
-                        mysqlConnection.commit()
-                        continue
-                    else:
-                        print("Unable to link preservation copy file " + file["object_uuid"] + " to an original file. Skipping...")
-                        continue
-                except Exception as e:
-                    print("Unable to link preservation copy file " + file["object_uuid"] + " to an original file. Skipping...")
-                    print(e)
-                    continue
+            originalFileSize = premis_object.size
+            formatName = premis_object.format_name
+            if (str(premis_object.format_registry_key)) != "(('format_registry_key',),)":
+                if (str(premis_object.format_registry_key)) != "()":
+                    formatRegistryKey = premis_object.format_registry_key
+            if (str(premis_object.format_version)) != "(('format_version',),)":
+                if (str(premis_object.format_version)) != "()":
+                    formatVersion = premis_object.format_version
 
-            elif fsentry.use == "original":
-                try:
-                    relativePathWithinAip = fsentry.path
-                    aipName = transfer_name
-                    originalFileName = fsentry.label
-                    originalFileSize = premis_object.size
-                    if (str(premis_object.format_registry_key)) != "(('format_registry_key',),)":
-                            if (str(premis_object.format_registry_key)) != "()":
-                                formatRegistryKey = premis_object.format_registry_key
-                    formatName = premis_object.format_name
-                    if (str(premis_object.format_version)) != "(('format_version',),)":
-                            if (str(premis_object.format_version)) != "()":
-                                formatVersion = premis_object.format_version
-                    sql = "UPDATE dip_files SET relativePathWithinAip = %s, aipName = %s, originalFileName = %s, originalFileSize = %s, formatRegistryName = %s, formatRegistryKey = %s, formatName = %s, formatVersion = %s WHERE object_id = %s;"
-                    mysqlCursor.execute(sql, (relativePathWithinAip, aipName, originalFileName, originalFileSize, "PRONOM", formatRegistryKey, formatName, formatVersion, file["object_id"]))
-                    mysqlConnection.commit()
-                    continue
-                except Exception as e:
-                    print("Unable to extract or save information for file " + file["object_uuid"] + " in AIP " + file["aip_uuid"])
-                    print(e)
-                    continue
-            else:
-                continue
+            # if preservationCopyNormalizedAt is not None:
+                # preservationCopyFileName =
+                # preservationCopyFileSize =
+
+            # Write the METS values to the MySQL working table.
+            sql = "UPDATE dip_files SET originalFileIngestedAt = %s, relativePathWithinAip = %s, aipName = %s, originalFileName = %s, originalFileSize = %s, formatName = %s, formatVersion = %s, formatRegistryName = %s, formatRegistryKey = %s, preservationCopyNormalizedAt = %s, preservationCopyFileName = %s, preservationCopyFileSize = %s WHERE object_id = %s;"
+            mysqlCursor.execute(sql, (originalFileIngestedAt, relativePathWithinAip, aipName, originalFileName, originalFileSize, formatName, formatVersion, "PRONOM", formatRegistryKey, preservationCopyNormalizedAt, preservationCopyFileName, preservationCopyFileSize, file["object_id"]))
+            mysqlConnection.commit()
+
 
 # loop over the working table values and insert updated property values
 # delete working table. delete METS directory.
