@@ -161,7 +161,9 @@ def get_mets_path(aip_uuid):
         relativePath + "/data/METS." + package["uuid"] + ".xml"
     )
 
-    return relativePathToMETS
+    transfer_name = relativePath[:-37]
+
+    return relativePathToMETS, transfer_name
 
 
 def get_mets_file(aip_uuid, relative_path):
@@ -187,7 +189,7 @@ def parse_mets_values():
         # Download METS file if a local copy is not present.
         if os.path.exists(METS_DIR + file["aip_uuid"] + ".xml") is False:
             try:
-                path = get_mets_path(file["aip_uuid"])
+                path, transfer_name = get_mets_path(file["aip_uuid"])
             except Exception as e:
                 print("Unable to derive relative path of METS file in package " + file["aip_uuid"])
                 print(e)
@@ -214,12 +216,15 @@ def parse_mets_values():
             print(e)
             continue
 
+        print(transfer_name)
         print(fsentry.use)
+        print(fsentry.path)
+        print(fsentry.label)
 
 '''
-        relativePathWithinAip = file_info.get("filepath")
+        relativePathWithinAip = fsentry.path
         aipName =
-        originalFileName = file_info.get("name")
+        originalFileName = fsentry.label
         originalFileSize =
         originalFileIngestedAt =
         preservationCopyFileName =
