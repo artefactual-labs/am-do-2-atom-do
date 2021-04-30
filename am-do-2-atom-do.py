@@ -209,9 +209,8 @@ def parse_mets_values():
 
         try:
             fsentry = mets.get_file(file_uuid=file["object_uuid"])
-            file_info = _get_file_properties(fs_entry)
         except Exception as e:
-            print("Unable to find metadata for file " + file["object_uuid"] + " in the METS XML for AIP " + file["aip_uuid"])
+            print("Unable to find metadata for file " + file["object_uuid"] + " in METS." + file["aip_uuid"] + ".xml")
             print(e)
             continue
 
