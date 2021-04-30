@@ -199,7 +199,7 @@ def parse_mets_values():
 
         # Read METS file
         try:
-            mets = metsrw.METSDocument.fromfile(METS_DIR + file["aip_uuid"] + ".xml")
+            mets = metsrw.METSDocument.fromfile(METS_DIR + "METS." + file["aip_uuid"] + ".xml")
         except Exception as e:
             print("METSRW is unable to parse the METS XML for package " + file["aip_uuid"] + ". Check your markup and see archivematica/issues#1129.")
             print(e)
