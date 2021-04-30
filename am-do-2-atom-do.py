@@ -1,8 +1,8 @@
-
 import os
 import sys
 import pymysql.cursors
 import requests
+import metsrw
 
 # Set Archivematica Storage Service parameters.
 STORAGE_SERVICE_URL = "http://dometadata.analyst.archivematica.net:8000/api/v2/"
@@ -55,26 +55,35 @@ except Exception as e:
     sys.exit("Unable to create working table. Check permissions for MySQL user.")
 
 
-
 def main():
     '''
     Update pre release 2.7 AtoM digital objects with information from AIP
     METS to take full advantage of the digital object metadata enhancement and AIP/file retrieval features.
     '''
 
-    print("Identifying legacy digital object records in AtoM.")
-    flush_legacy_digital_file_properties()
+    #print("Identifying legacy digital object records in AtoM...")
+    #flush_legacy_digital_file_properties()
+
+    print("Parsing values from METS files...")
+    parse_mets_values()
 
     '''
-    print("Parsing values from METS files and updating digital object records."
+    print("Updating digital file properties...")
     update_digital_file_properties()
 
-    print("Cleaning up temporary files.")
+    print("Cleaning up temporary files...")
     delete_temporary_files()
+
+    print("Data update complete. X records successfully updated. Y records failed to update.")
+
+    # TODO1:    Add X & Y values above ^
+    # TODO2:    Send all script print output to a log file. So that specfic
+    #           error messages for specific files can be followed-up on if
+    #           necessary. The interim work-around is to pipe the output of
+    #           this script to a make-shift log file:
+    #           `python am-do-2-atom-do.py > update_script.log`
+
     '''
-
-
-
 
 
 def flush_legacy_digital_file_properties():
@@ -132,38 +141,6 @@ def flush_legacy_digital_file_properties():
             continue
 
 
-def update_digital_file_properties():
-    try:
-        # Select all the legacy DIP file records from the working table.
-        sql = "SELECT * FROM dip_files;"
-        mysqlCursor.execute(sql)
-        legacy_dip_files = mysqlCursor.fetchall()
-    except Exception as e:
-        print("Unable to select files from working table.")
-        print(e)
-
-    for file in legacy_dip_files:
-        # Download METS file if a local copy is not present.
-        if os.path.exists(METS_DIR + file["aip_uuid"] + ".xml") is False:
-            try:
-                path = get_mets_path(file["aip_uuid"])
-            except Exception as e:
-                print("Unable to derive relative path of METS file in package " + file["aip_uuid"])
-                print(e)
-                continue
-            try:
-                get_mets_file(file["aip_uuid"], path)
-            except Exception as e:
-                print("Unable to fetch METS file for package " + file["aip_uuid"])
-                print(e)
-                continue
-
-
-    # parse the METS file with METSRW for the property info values
-    # write the values to the working table
-    # loop over the working table values and insert updated property values
-
-
 def get_mets_path(aip_uuid):
     request_url = STORAGE_SERVICE_URL + "file/" + aip_uuid + "?username=" + STORAGE_SERVICE_USER + "&api_key=" + STORAGE_SERVICE_API_KEY
     try:
@@ -192,6 +169,65 @@ def get_mets_file(aip_uuid, relative_path):
     download_file = os.path.join(METS_DIR, mets_file)
     with open(download_file, "wb") as file:
         file.write(response.content)
+
+
+def parse_mets_values():
+    try:
+        # Select all the legacy DIP file records from the working table.
+        sql = "SELECT * FROM dip_files;"
+        mysqlCursor.execute(sql)
+        legacy_dip_files = mysqlCursor.fetchall()
+    except Exception as e:
+        print("Unable to select files from working table.")
+        print(e)
+
+    for file in legacy_dip_files:
+        # Download METS file if a local copy is not present.
+        if os.path.exists(METS_DIR + file["aip_uuid"] + ".xml") is False:
+            try:
+                path = get_mets_path(file["aip_uuid"])
+            except Exception as e:
+                print("Unable to derive relative path of METS file in package " + file["aip_uuid"])
+                print(e)
+                continue
+            try:
+                get_mets_file(file["aip_uuid"], path)
+            except Exception as e:
+                print("Unable to fetch METS file for package " + file["aip_uuid"])
+                print(e)
+                continue
+
+        # Read METS file
+        try:
+            mets = metsrw.METSDocument.fromfile(METS_DIR + file["aip_uuid"] + ".xml")
+        except Exception as e:
+            print("METSRW is unable to parse the METS XML for package " + file["aip_uuid"] + ". Check your markup and see archivematica/issues#1129.")
+            print(e)
+            continue
+
+        try:
+            fsentry = mets.get_file(file_uuid=file["object_uuid"])
+        except Exception as e:
+            print("Unable to find metadata for file " + file["object_uuid"] + " in the METS XML for AIP " + file["aip_uuid"])
+            print(e)
+            continue
+
+        print(fsentry)
+
+
+
+
+
+
+
+
+
+    # parse the METS file with METSRW for the property info values
+    # write the values to the working table
+    # loop over the working table values and insert updated property values
+
+
+
 
 # delete working table. delete METS directory.
 
