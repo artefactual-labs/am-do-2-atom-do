@@ -49,6 +49,8 @@ try:
     # Create a working table for transferring the legacy DIP file properties.
     sql = "CREATE TABLE IF NOT EXISTS dip_files(object_id INTEGER PRIMARY KEY, object_uuid TEXT, aip_uuid TEXT);"
     mysqlCursor.execute(sql)
+    sql = "CREATE TABLE IF NOT EXISTS premis_events(id INTEGER PRIMARY KEY, object_id INTEGER, value TEXT);"
+    mysqlCursor.execute(sql)
     mysqlConnection.commit()
 except Exception as e:
     print(e)
@@ -207,13 +209,29 @@ def parse_mets_values():
 
         try:
             fsentry = mets.get_file(file_uuid=file["object_uuid"])
+            file_info = _get_file_properties(fs_entry)
         except Exception as e:
             print("Unable to find metadata for file " + file["object_uuid"] + " in the METS XML for AIP " + file["aip_uuid"])
             print(e)
             continue
 
-        print(fsentry)
+        print(fsentry.use)
 
+'''
+        relativePathWithinAip = file_info.get("filepath")
+        aipName =
+        originalFileName = file_info.get("name")
+        originalFileSize =
+        originalFileIngestedAt =
+        preservationCopyFileName =
+        preservationCopyFileSize =
+        preservationCopyNormalizedAt =
+        formatName =
+        formatVersion =
+        formatRegistryName =
+        formatRegistryKey =
+        [PREMIS_EVENTS]
+'''
 
 
 
