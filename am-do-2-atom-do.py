@@ -53,9 +53,9 @@ try:
     mysqlCursor.execute(sql)
     mysqlConnection.commit()
     '''
-    sql = "CREATE TABLE dip_files(object_id INTEGER PRIMARY KEY, object_uuid TEXT, aip_uuid TEXT, originalFileIngestedAt TEXT, relativePathWithinAip TEXT, aipName TEXT, originalFileName TEXT, originalFileSize TEXT, formatName TEXT, formatVersion TEXT, formatRegistryName TEXT, formatRegistryKey TEXT, preservationCopyNormalizedAt TEXT, preservationCopyFileName TEXT, preservationCopyFileSize TEXT);"
+    sql = "CREATE TABLE IF NOT EXISTS dip_files(object_id INTEGER PRIMARY KEY, object_uuid TEXT, aip_uuid TEXT, originalFileIngestedAt TEXT, relativePathWithinAip TEXT, aipName TEXT, originalFileName TEXT, originalFileSize TEXT, formatName TEXT, formatVersion TEXT, formatRegistryName TEXT, formatRegistryKey TEXT, preservationCopyNormalizedAt TEXT, preservationCopyFileName TEXT, preservationCopyFileSize TEXT);"
     mysqlCursor.execute(sql)
-    sql = "CREATE TABLE premis_events(id INTEGER PRIMARY KEY, object_id INTEGER, value TEXT);"
+    sql = "CREATE TABLE IF NOT EXISTS premis_events(id INTEGER PRIMARY KEY, object_id INTEGER, value TEXT);"
     mysqlCursor.execute(sql)
     mysqlConnection.commit()
 except Exception as e:
