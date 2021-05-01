@@ -17,6 +17,9 @@ METS_DIR = "DIP_METS/"
 if not os.path.exists(METS_DIR):
     os.makedirs(METS_DIR)
 
+# Initialize crude error counter.
+ERROR_COUNT = 0
+
 # Test Storage Service connection
 try:
     request_url = STORAGE_SERVICE_URL + "file/" + "?username=" + STORAGE_SERVICE_USER + "&api_key=" + STORAGE_SERVICE_API_KEY
@@ -48,11 +51,10 @@ except Exception as e:
 
 try:
     # Create a working table for transferring the legacy DIP file properties.
-    '''
     sql = "DROP TABLE IF EXISTS dip_files, premis_events;"
     mysqlCursor.execute(sql)
     mysqlConnection.commit()
-    '''
+
     sql = "CREATE TABLE IF NOT EXISTS dip_files(object_id INTEGER PRIMARY KEY, object_uuid TEXT, aip_uuid TEXT, originalFileIngestedAt TEXT, relativePathWithinAip TEXT, aipName TEXT, originalFileName TEXT, originalFileSize TEXT, formatName TEXT, formatVersion TEXT, formatRegistryName TEXT, formatRegistryKey TEXT, preservationCopyNormalizedAt TEXT, preservationCopyFileName TEXT, preservationCopyFileSize TEXT);"
     mysqlCursor.execute(sql)
     sql = "CREATE TABLE IF NOT EXISTS premis_events(id INTEGER PRIMARY KEY, object_id INTEGER, value TEXT);"
@@ -73,34 +75,32 @@ def main():
     print("am-do-2-atom-do script started at: " + script_start.strftime("%Y-%m-%d %H:%M:%S"))
     print("--------")
 
-
     #print("Identifying legacy digital object records in AtoM...")
-    #flush_legacy_digital_file_properties()
+    #legacy_count = flush_legacy_digital_file_properties()
 
-    #print("Parsing values from METS files...")
-    #parse_mets_values()
+    sql = "SELECT COUNT(*) FROM digital_object;"
+    mysqlCursor.execute(sql)
+    total_count = mysqlCursor.fetchone()
+
+    '''
+    print("Parsing values from METS files...")
+    parse_mets_values()
 
     print("Updating digital file properties...")
     update_digital_file_properties()
 
-    #print("Cleaning up temporary files...")
+    print("Cleaning up temporary files...")
     #delete_temporary_files()
+    '''
 
     print("--------")
     script_end = datetime.datetime.now().replace(microsecond=0)
     print("am-do-2-atom-do script finished at: " + script_end.strftime("%Y-%m-%d %H:%M:%S"))
     duration = script_end - script_start
     print("Script duration: " + str(duration))
-
-
-
-    #print("Data update complete. X records successfully updated. Y records failed to update.")
-    # TODO1:    Add X & Y values above ^
-    # TODO2:    Send all script print output to a log file. So that specfic
-    #           error messages for specific files can be followed-up on if
-    #           necessary. The interim work-around is to pipe the output of
-    #           this script to a make-shift log file:
-    #           `python am-do-2-atom-do.py > update_script.log`
+    print("Total number of digital objects in AtoM: " + str(total_count))
+    print("Total number of 'legacy` digital objects updated: " + str(legacy_count))
+    print("Number of errors encountered: " + str(ERROR_COUNT))
 
 
 def flush_legacy_digital_file_properties():
@@ -108,6 +108,7 @@ def flush_legacy_digital_file_properties():
     sql = "SELECT * FROM property WHERE name='objectUUID' AND scope is NULL;"
     mysqlCursor.execute(sql)
     legacy_dip_files = mysqlCursor.fetchall()
+    legacy_count = len(legacy_dip_files)
 
     for file in legacy_dip_files:
         try:
@@ -119,6 +120,8 @@ def flush_legacy_digital_file_properties():
         except Exception as e:
             print("Unable to select Object UUID for object# " + str(file['id']) + ". Skipping...")
             print(e)
+            global ERROR_COUNT
+            ERROR_COUNT += 1
             continue
 
         try:
@@ -133,6 +136,8 @@ def flush_legacy_digital_file_properties():
         except Exception as e:
             print("Unable to select AIP UUID for object# " + str(file['id']) + ". Skipping...")
             print(e)
+            global ERROR_COUNT
+            ERROR_COUNT += 1
             continue
 
         try:
@@ -143,6 +148,8 @@ def flush_legacy_digital_file_properties():
         except Exception as e:
             print("Unable to insert working data for object# " + str(file['id']) + ". Skipping...")
             print(e)
+            global ERROR_COUNT
+            ERROR_COUNT += 1
             continue
 
         try:
@@ -155,7 +162,11 @@ def flush_legacy_digital_file_properties():
         except Exception as e:
             print("Unable to flush existing property values for object# " + str(file['id']) + ". Skipping...")
             print(e)
+            global ERROR_COUNT
+            ERROR_COUNT += 1
             continue
+
+    return legacy_count
 
 
 def get_mets_path(aip_uuid):
@@ -163,8 +174,9 @@ def get_mets_path(aip_uuid):
     try:
         response = requests.get(request_url)
     except Exception as e:
-        print("Unable to connect to Storage Service. Check your connection parameters.")
         print(e)
+        sys.exit("Unable to connect to Storage Service. Check your connection parameters.")
+
     package = response.json()
 
     # build relative path to METS file
@@ -198,8 +210,8 @@ def parse_mets_values():
         mysqlCursor.execute(sql)
         legacy_dip_files = mysqlCursor.fetchall()
     except Exception as e:
-        print("Unable to select files from working table.")
         print(e)
+        sys.exit("Unable to select files from working table.")
 
     for file in legacy_dip_files:
         # Download METS file if a local copy is not present.
@@ -209,12 +221,16 @@ def parse_mets_values():
             except Exception as e:
                 print("Unable to derive relative path of METS file in package " + file["aip_uuid"])
                 print(e)
+                global ERROR_COUNT
+                ERROR_COUNT += 1
                 continue
             try:
                 get_mets_file(file["aip_uuid"], path)
             except Exception as e:
                 print("Unable to fetch METS file for package " + file["aip_uuid"])
                 print(e)
+                global ERROR_COUNT
+                ERROR_COUNT += 1
                 continue
 
         # Read the METS file.
@@ -223,6 +239,8 @@ def parse_mets_values():
         except Exception as e:
             print("METSRW is unable to parse the METS XML for package " + file["aip_uuid"] + ". Check your markup and see archivematica/issues#1129.")
             print(e)
+            global ERROR_COUNT
+            ERROR_COUNT += 1
             continue
 
         # Retrieve values for the current AtoM digital object from the METS.
@@ -231,6 +249,8 @@ def parse_mets_values():
         except Exception as e:
             print("Unable to find metadata for file " + file["object_uuid"] + " in METS." + file["aip_uuid"] + ".xml")
             print(e)
+            global ERROR_COUNT
+            ERROR_COUNT += 1
             continue
 
         # Initialize all properties to Null to avoid missing value errors.
@@ -273,11 +293,16 @@ def parse_mets_values():
                 if (str(premis_object.format_version)) != "(('format_version',),)":
                     if (str(premis_object.format_version)) != "()":
                         formatVersion = premis_object.format_version
-            except:
+            except Exception as e:
                 # A workaround hack for some METSRW failures that were only
                 # occurring on ISO formats in the sample data.
                 formatName = "ISO Disk Image File"
                 formatRegistryKey = "fmt/468"
+
+                print(e)
+                print("Unable to match file format to a registry key for digital object " + file["object_uuid"] + ". Using `fmt/468 - ISO Disk Image` as best guess.")
+                global ERROR_COUNT
+                ERROR_COUNT += 1
 
             # if preservationCopyNormalizedAt is not None:
                 # preservationCopyFileName =
@@ -301,6 +326,8 @@ def write_property(object_id, scope, name, value, object_uuid):
     except Exception as e:
         print("Unable to add property `" + name + " for digital object " + object_uuid)
         print(e)
+        global ERROR_COUNT
+        ERROR_COUNT += 1
 
 
 def update_digital_file_properties():
