@@ -72,26 +72,22 @@ def main():
     #print("Identifying legacy digital object records in AtoM...")
     #flush_legacy_digital_file_properties()
 
-    print("Parsing values from METS files...")
-    parse_mets_values()
+    #print("Parsing values from METS files...")
+    #parse_mets_values()
 
-    '''
     print("Updating digital file properties...")
     update_digital_file_properties()
 
-    print("Cleaning up temporary files...")
-    delete_temporary_files()
+    #print("Cleaning up temporary files...")
+    #delete_temporary_files()
 
-    print("Data update complete. X records successfully updated. Y records failed to update.")
-
+    #print("Data update complete. X records successfully updated. Y records failed to update.")
     # TODO1:    Add X & Y values above ^
     # TODO2:    Send all script print output to a log file. So that specfic
     #           error messages for specific files can be followed-up on if
     #           necessary. The interim work-around is to pipe the output of
     #           this script to a make-shift log file:
     #           `python am-do-2-atom-do.py > update_script.log`
-
-    '''
 
 
 def flush_legacy_digital_file_properties():
@@ -255,14 +251,20 @@ def parse_mets_values():
             '''
 
         for premis_object in fsentry.get_premis_objects():
-            originalFileSize = premis_object.size
-            formatName = premis_object.format_name
-            if (str(premis_object.format_registry_key)) != "(('format_registry_key',),)":
-                if (str(premis_object.format_registry_key)) != "()":
-                    formatRegistryKey = premis_object.format_registry_key
-            if (str(premis_object.format_version)) != "(('format_version',),)":
-                if (str(premis_object.format_version)) != "()":
-                    formatVersion = premis_object.format_version
+            try:
+                originalFileSize = premis_object.size
+                formatName = premis_object.format_name
+                if (str(premis_object.format_registry_key)) != "(('format_registry_key',),)":
+                    if (str(premis_object.format_registry_key)) != "()":
+                        formatRegistryKey = premis_object.format_registry_key
+                if (str(premis_object.format_version)) != "(('format_version',),)":
+                    if (str(premis_object.format_version)) != "()":
+                        formatVersion = premis_object.format_version
+            except:
+                # A workaround hack for some METSRW failures that were only
+                # occurring on ISO formats in the sample data.
+                formatName = "ISO Disk Image File"
+                formatRegistryKey = "fmt/468"
 
             # if preservationCopyNormalizedAt is not None:
                 # preservationCopyFileName =
@@ -274,7 +276,44 @@ def parse_mets_values():
             mysqlConnection.commit()
 
 
-# loop over the working table values and insert updated property values
+def write_property(object_id, scope, name, value, object_uuid):
+    # Helper function to insert updated property values.
+    try:
+        sql = "INSERT INTO `property` (`object_id`, `scope`, `name`, `source_culture`) VALUES (%s, %s, %s, %s)"
+        mysqlCursor.execute(sql, (object_id, scope, name, "en"))
+        property_id = mysqlCursor.lastrowid
+        sql = "INSERT INTO `property_i18n` (`value`, `id`, `culture`) VALUES (%s, %s, %s)"
+        mysqlCursor.execute(sql, (value, property_id, "en"))
+        mysqlConnection.commit()
+    except Exception as e:
+        print("Unable to add property `" + name + " for digital object " + object_uuid)
+        print(e)
+
+
+def update_digital_file_properties():
+    # Select all the legacy DIP file records from the working table.
+    sql = "SELECT * FROM dip_files;"
+    mysqlCursor.execute(sql)
+    legacy_dip_files = mysqlCursor.fetchall()
+
+    # Loop over records in working table and insert updated property values.
+    for file in legacy_dip_files:
+        write_property(file["object_id"], "Archivematica AIP", "objectUUID", file["object_uuid"], file["object_uuid"])
+        write_property(file["object_id"], "Archivematica AIP", "aipUUID", file["aip_uuid"], file["object_uuid"])
+        write_property(file["object_id"], "Archivematica AIP", "relativePathWithinAip", file["relativePathWithinAip"], file["object_uuid"])
+        write_property(file["object_id"], "Archivematica AIP", "aipName", file["aipName"], file["object_uuid"])
+        write_property(file["object_id"], "Archivematica AIP", "originalFileName", file["originalFileName"], file["object_uuid"])
+        write_property(file["object_id"], "Archivematica AIP", "originalFileSize", file["originalFileSize"], file["object_uuid"])
+        write_property(file["object_id"], "Archivematica AIP", "originalFileIngestedAt", file["originalFileIngestedAt"], file["object_uuid"])
+        write_property(file["object_id"], "Archivematica AIP", "preservationCopyFileName", file["preservationCopyFileName"], file["object_uuid"])
+        write_property(file["object_id"], "Archivematica AIP", "preservationCopyFileSize", file["preservationCopyFileSize"], file["object_uuid"])
+        write_property(file["object_id"], "Archivematica AIP", "preservationCopyNormalizedAt", file["preservationCopyNormalizedAt"], file["object_uuid"])
+        write_property(file["object_id"], "premisData", "formatName", file["formatName"], file["object_uuid"])
+        write_property(file["object_id"], "premisData", "formatVersion", file["formatVersion"], file["object_uuid"])
+        write_property(file["object_id"], "premisData", "formatRegistryName", file["formatRegistryName"], file["object_uuid"])
+        write_property(file["object_id"], "premisData", "formatRegistryKey", file["formatRegistryKey"], file["object_uuid"])
+
+
 # delete working table. delete METS directory.
 
 if __name__ == "__main__":
