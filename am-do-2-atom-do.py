@@ -17,8 +17,7 @@ METS_DIR = "DIP_METS/"
 if not os.path.exists(METS_DIR):
     os.makedirs(METS_DIR)
 
-# Initialize crude error counter.
-global ERROR_COUNT
+# Initialize a crude, global error counter. Pre-mature exits are not counted.
 ERROR_COUNT = 0
 
 # Test Storage Service connection
@@ -105,6 +104,8 @@ def main():
 
 
 def flush_legacy_digital_file_properties():
+    global ERROR_COUNT
+
     # Select all the legacy DIP files.
     sql = "SELECT * FROM property WHERE name='objectUUID' AND scope is NULL;"
     mysqlCursor.execute(sql)
@@ -121,7 +122,6 @@ def flush_legacy_digital_file_properties():
         except Exception as e:
             print("Unable to select Object UUID for object# " + str(file['id']) + ". Skipping...")
             print(e)
-            global ERROR_COUNT
             ERROR_COUNT += 1
             continue
 
@@ -137,7 +137,6 @@ def flush_legacy_digital_file_properties():
         except Exception as e:
             print("Unable to select AIP UUID for object# " + str(file['id']) + ". Skipping...")
             print(e)
-            global ERROR_COUNT
             ERROR_COUNT += 1
             continue
 
@@ -149,7 +148,6 @@ def flush_legacy_digital_file_properties():
         except Exception as e:
             print("Unable to insert working data for object# " + str(file['id']) + ". Skipping...")
             print(e)
-            global ERROR_COUNT
             ERROR_COUNT += 1
             continue
 
@@ -163,7 +161,6 @@ def flush_legacy_digital_file_properties():
         except Exception as e:
             print("Unable to flush existing property values for object# " + str(file['id']) + ". Skipping...")
             print(e)
-            global ERROR_COUNT
             ERROR_COUNT += 1
             continue
 
@@ -205,6 +202,7 @@ def get_mets_file(aip_uuid, relative_path):
 
 
 def parse_mets_values():
+    global ERROR_COUNT
     try:
         # Select all the legacy DIP file records from the working table.
         sql = "SELECT * FROM dip_files;"
@@ -222,7 +220,6 @@ def parse_mets_values():
             except Exception as e:
                 print("Unable to derive relative path of METS file in package " + file["aip_uuid"])
                 print(e)
-                global ERROR_COUNT
                 ERROR_COUNT += 1
                 continue
             try:
@@ -230,7 +227,6 @@ def parse_mets_values():
             except Exception as e:
                 print("Unable to fetch METS file for package " + file["aip_uuid"])
                 print(e)
-                global ERROR_COUNT
                 ERROR_COUNT += 1
                 continue
 
@@ -240,7 +236,6 @@ def parse_mets_values():
         except Exception as e:
             print("METSRW is unable to parse the METS XML for package " + file["aip_uuid"] + ". Check your markup and see archivematica/issues#1129.")
             print(e)
-            global ERROR_COUNT
             ERROR_COUNT += 1
             continue
 
@@ -250,7 +245,6 @@ def parse_mets_values():
         except Exception as e:
             print("Unable to find metadata for file " + file["object_uuid"] + " in METS." + file["aip_uuid"] + ".xml")
             print(e)
-            global ERROR_COUNT
             ERROR_COUNT += 1
             continue
 
@@ -262,12 +256,10 @@ def parse_mets_values():
         originalFileSize = None
         formatName = None
         formatVersion = None
-        formatRegistryName = None
         formatRegistryKey = None
         preservationCopyNormalizedAt = None
         preservationCopyFileName = None
         preservationCopyFileSize = None
-
         relativePathWithinAip = fsentry.path
         aipName = transfer_name
         originalFileName = fsentry.label
@@ -302,7 +294,6 @@ def parse_mets_values():
 
                 print(e)
                 print("Unable to match file format to a registry key for digital object " + file["object_uuid"] + ". Using `fmt/468 - ISO Disk Image` as best guess.")
-                global ERROR_COUNT
                 ERROR_COUNT += 1
 
             # if preservationCopyNormalizedAt is not None:
@@ -316,6 +307,7 @@ def parse_mets_values():
 
 
 def write_property(object_id, scope, name, value, object_uuid):
+    global ERROR_COUNT
     # Helper function to insert updated property values.
     try:
         sql = "INSERT INTO `property` (`object_id`, `scope`, `name`, `source_culture`) VALUES (%s, %s, %s, %s)"
@@ -327,7 +319,6 @@ def write_property(object_id, scope, name, value, object_uuid):
     except Exception as e:
         print("Unable to add property `" + name + " for digital object " + object_uuid)
         print(e)
-        global ERROR_COUNT
         ERROR_COUNT += 1
 
 
