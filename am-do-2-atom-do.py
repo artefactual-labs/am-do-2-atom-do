@@ -69,6 +69,11 @@ def main():
     METS to take full advantage of the digital object metadata enhancement and AIP/file retrieval features.
     '''
 
+    script_start = datetime.datetime.now().replace(microsecond=0)
+    print("am-do-2-atom-do script started at: " + script_start.strftime("%Y-%m-%d %H:%M:%S"))
+    print("--------")
+
+
     #print("Identifying legacy digital object records in AtoM...")
     #flush_legacy_digital_file_properties()
 
@@ -80,6 +85,14 @@ def main():
 
     #print("Cleaning up temporary files...")
     #delete_temporary_files()
+
+    print("--------")
+    script_end = datetime.datetime.now().replace(microsecond=0)
+    print("am-do-2-atom-do script finished at: " + script_end.strftime("%Y-%m-%d %H:%M:%S"))
+    duration = script_end - script_start
+    print("Script duration: " + str(duration))
+
+
 
     #print("Data update complete. X records successfully updated. Y records failed to update.")
     # TODO1:    Add X & Y values above ^
