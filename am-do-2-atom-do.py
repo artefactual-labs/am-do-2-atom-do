@@ -18,6 +18,7 @@ if not os.path.exists(METS_DIR):
     os.makedirs(METS_DIR)
 
 # Initialize crude error counter.
+global ERROR_COUNT
 ERROR_COUNT = 0
 
 # Test Storage Service connection
