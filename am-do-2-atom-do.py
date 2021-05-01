@@ -48,6 +48,9 @@ except Exception as e:
 
 try:
     # Create a working table for transferring the legacy DIP file properties.
+    sql = "DROP TABLE dip_files; DROP TABLE premis_events;"
+    mysqlCursor.execute(sql)
+    mysqlConnection.commit()
     sql = "CREATE TABLE IF NOT EXISTS dip_files(object_id INTEGER PRIMARY KEY, object_uuid TEXT, aip_uuid TEXT, originalFileIngestedAt TEXT, relativePathWithinAip TEXT, aipName TEXT, originalFileName TEXT, originalFileSize TEXT, formatName TEXT, formatVersion TEXT, formatRegistryName TEXT, formatRegistryKey TEXT, preservationCopyNormalizedAt TEXT, preservationCopyFileName TEXT, preservationCopyFileSize TEXT);"
     mysqlCursor.execute(sql)
     sql = "CREATE TABLE IF NOT EXISTS premis_events(id INTEGER PRIMARY KEY, object_id INTEGER, value TEXT);"
@@ -64,11 +67,11 @@ def main():
     METS to take full advantage of the digital object metadata enhancement and AIP/file retrieval features.
     '''
 
-    print("Identifying legacy digital object records in AtoM...")
-    flush_legacy_digital_file_properties()
+    #print("Identifying legacy digital object records in AtoM...")
+    #flush_legacy_digital_file_properties()
 
-    print("Parsing values from METS files...")
-    parse_mets_values()
+    #print("Parsing values from METS files...")
+    #parse_mets_values()
 
     '''
     print("Updating digital file properties...")
