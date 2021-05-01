@@ -48,7 +48,7 @@ except Exception as e:
 
 try:
     # Create a working table for transferring the legacy DIP file properties.
-    sql = "DROP TABLE dip_files, premis_events;"
+    sql = "DROP TABLE IF EXISTS dip_files, premis_events;"
     mysqlCursor.execute(sql)
     mysqlConnection.commit()
     sql = "CREATE TABLE IF NOT EXISTS dip_files(object_id INTEGER PRIMARY KEY, object_uuid TEXT, aip_uuid TEXT, originalFileIngestedAt TEXT, relativePathWithinAip TEXT, aipName TEXT, originalFileName TEXT, originalFileSize TEXT, formatName TEXT, formatVersion TEXT, formatRegistryName TEXT, formatRegistryKey TEXT, preservationCopyNormalizedAt TEXT, preservationCopyFileName TEXT, preservationCopyFileSize TEXT);"
