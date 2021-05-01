@@ -3,7 +3,7 @@ import sys
 import pymysql.cursors
 import requests
 import metsrw
-import datetime
+from datetime import datetime
 
 # Set Archivematica Storage Service parameters.
 STORAGE_SERVICE_URL = "http://dometadata.analyst.archivematica.net:8000/api/v2/"
@@ -48,12 +48,14 @@ except Exception as e:
 
 try:
     # Create a working table for transferring the legacy DIP file properties.
+    '''
     sql = "DROP TABLE IF EXISTS dip_files, premis_events;"
     mysqlCursor.execute(sql)
     mysqlConnection.commit()
-    sql = "CREATE TABLE IF NOT EXISTS dip_files(object_id INTEGER PRIMARY KEY, object_uuid TEXT, aip_uuid TEXT, originalFileIngestedAt TEXT, relativePathWithinAip TEXT, aipName TEXT, originalFileName TEXT, originalFileSize TEXT, formatName TEXT, formatVersion TEXT, formatRegistryName TEXT, formatRegistryKey TEXT, preservationCopyNormalizedAt TEXT, preservationCopyFileName TEXT, preservationCopyFileSize TEXT);"
+    '''
+    sql = "CREATE TABLE dip_files(object_id INTEGER PRIMARY KEY, object_uuid TEXT, aip_uuid TEXT, originalFileIngestedAt TEXT, relativePathWithinAip TEXT, aipName TEXT, originalFileName TEXT, originalFileSize TEXT, formatName TEXT, formatVersion TEXT, formatRegistryName TEXT, formatRegistryKey TEXT, preservationCopyNormalizedAt TEXT, preservationCopyFileName TEXT, preservationCopyFileSize TEXT);"
     mysqlCursor.execute(sql)
-    sql = "CREATE TABLE IF NOT EXISTS premis_events(id INTEGER PRIMARY KEY, object_id INTEGER, value TEXT);"
+    sql = "CREATE TABLE premis_events(id INTEGER PRIMARY KEY, object_id INTEGER, value TEXT);"
     mysqlCursor.execute(sql)
     mysqlConnection.commit()
 except Exception as e:
@@ -70,8 +72,8 @@ def main():
     #print("Identifying legacy digital object records in AtoM...")
     #flush_legacy_digital_file_properties()
 
-    #print("Parsing values from METS files...")
-    #parse_mets_values()
+    print("Parsing values from METS files...")
+    parse_mets_values()
 
     '''
     print("Updating digital file properties...")
