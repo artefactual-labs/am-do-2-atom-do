@@ -292,7 +292,7 @@ def parse_mets_values():
             # If this digital object has a preservation copy, retrieve its
             # information.
             if premis_object.relationship__relationship_sub_type == "is source of":
-                preservation_copy_uuid = object.relationship__related_object_identifier__related_object_identifier_value
+                preservation_copy_uuid = premis_object.relationship__related_object_identifier__related_object_identifier_value
                 preservation_file = mets.get_file(file_uuid=preservation_copy_uuid)
                 preservationCopyFileName = preservation_file.label
                 for entry in preservation_file.get_premis_objects():
