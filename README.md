@@ -7,7 +7,7 @@ The purpose of this script is to update the metadata for all digital objects tha
 * [Notes](#notes)
 
 # Background
-Prior to release 2.7, digital object metadata dislay in AtoM was confusing. It was not clear which file representation the information was referring to. This was particularly true if the digital object was uploaded from Archivematica and therefore may have had an original format and preservation copy in Archivematica as well as a "master", "reference" and "thumbnail" representation in AtoM.
+Prior to release 2.7, digital object metadata display in AtoM was confusing. It was not clear which file representation the information was referring to. This was particularly true if the digital object was uploaded from Archivematica and therefore may have had an original format and preservation copy in Archivematica as well as a "master", "reference" and "thumbnail" representation in AtoM.
 
 <img width="1180" alt="AtoM3 6-dip-upload" src="images/legacy_do.png">
 
@@ -55,6 +55,9 @@ The enhanced digital object metadata and original file download feature will wor
     ![image](images/successful_run.png)
 8. If the script encounters a fatal error it will report the reason and abort. If it encounters a processing error, it will report the error, add it to the error count, and continue processing. The goal is to complete the upgrade of the entire dataset without letting one or two data anomolies block the entire process. Instead, the script supports many error handling scenarios and its messages should provide enough detail to follow-up on any individual processing errors. Of course, if there is a very high error count that might indicate a more fundamental problem that needs to be resolved in the code.
 9. After the script is run, all the AtoM 2.7 digital objects will automatically have enhanced digital object metadata display enabled. There is no need to do a SQL migration or search index upgrade. However, for the Download File feature to work, the AtoM administrator must enable the StorageService plugin and configure its Archivematica Storage Service access priviliges in `Settings > Storage Service`.
+10. Restore from backup in case of any unforeseen, catastrophic errors:  
+   `$mysql -u atom-user -p atom < 2.7.dump.sql`  
+      
 
 # Notes
 
