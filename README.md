@@ -7,7 +7,7 @@ The purpose of this script is to update the metadata for all digital objects tha
 * [Notes](#notes)
 
 # Background
-Prior to release 2.7, digital object metadata dislay in AtoM was confusing. It was not clear which file representation the presented information is referring to. This is particularly true if the digital object was uploaded from Archivematica and therefore may have an original format and preservation copy in Archivematica as well as a "master", "reference" and "thumbnail" representation in AtoM.
+Prior to release 2.7, digital object metadata dislay in AtoM was confusing. It was not clear which file representation the information was referring to. This was particularly true if the digital object was uploaded from Archivematica and therefore may have had an original format and preservation copy in Archivematica as well as a "master", "reference" and "thumbnail" representation in AtoM.
 
 <img width="1180" alt="AtoM3 6-dip-upload" src="images/legacy_do.png">
 
@@ -17,11 +17,11 @@ This was the reason [enhanced digital object metadata display](https://www.acces
 
 ![image](images/enhanced_do.png)
 
-The enhanced display includes more information per representation and the ability to download the AIP and original file in Archivematica if the user has permission and if the metadata to facilitate that request is present in the first place. 
+The enhanced display includes more information about each digital object representation as well as the ability to download the AIP and the originally ingested file from Archivematica (if the user has permission and if the metadata to facilitate that request is present in AtoM in the first place). 
 
 ![image](/images/download_do.png)
 
-The enhanced digital object metadata feature will work for users of integrated Archivematica and AtoM installations from release 2.7 forward. All the digital objects they may have ingested into Archivematica and described in AtoM prior to the upgrade will not be displayed. That's the gap this script is intended to address.
+The enhanced digital object metadata and original file download feature will work for users of integrated Archivematica and AtoM installations from release 2.7 forward. However, this does not apply to all the digital objects they may have ingested into Archivematica and described in AtoM prior to the upgrade. That's the gap this script is intended to address.
 
 # Methodology
 
@@ -36,6 +36,24 @@ The enhanced digital object metadata feature will work for users of integrated A
 9. Delete temporary METS download folder and MySQL working table.
 
 # Instructions
+
+1. Freeze data entry on your AtoM 2.6.x site. Create a database snapshot as backup:  
+   `$ mysqldump -u atom-user -p --no-tablespaces --databases atom > 2.6.dump.sql`
+2. Upgrade AtoM to release 2.7.x. Be sure to run the SQL migrations as part of the upgrade. Create a database snapshot as backup:  
+   `$ mysqldump -u atom-user -p --no-tablespaces --databases atom > 2.7.dump.sql`
+3. Install a copy of the `am-do-2-atom-do.py` script on a host that has access to the AtoM MySQL server. One way to do this is to checkout the script from this Github repository:  
+   `$ git checkout https://github.com/artefactual-labs/am-do-2-atom-do.git`
+4. Move to the directory that contains the script. Create a Python virtual environment. This script has been developed and tested on Python 3.8.  
+    `$ cd am-do-2-do`   
+    `$ virtualenv venv`    
+    `$ source venv/bin/activate`   
+5. Install the script requirements:  
+    `(venv)$ pip install -r requirements.txt`  
+6. Run the script:  
+    `(venv)$ python am-do-2-atom-do.py`
+7.  A successful run includes all the following output:  
+    ![image](images/successful_run.png)
+8. If the script encounters a fatal error it will report the reason and abort. If it encounters a processing error, it will report the error, add it to the error count, and continue processing. The script supports many error handling scenarios and its messages should provide enough detail to follow-up on any individual processing errors.
 
 # Notes
 
