@@ -264,10 +264,6 @@ def parse_mets_values():
             if (premis_event.event_type) == "ingestion":
                 eventDate = (premis_event.event_date_time)[:-13]
                 originalFileIngestedAt = datetime.strptime(eventDate, "%Y-%m-%dT%H:%M:%S")
-            if (premis_event.event_type) == "creation":
-                eventDate = (premis_event.event_date_time)[:-13]
-                preservationCopyNormalizedAt = datetime.strptime(eventDate, "%Y-%m-%dT%H:%M:%S")
-
             '''
             TODO: Add all PREMIS Events to AtoM MySQL database as a string array stored in a property_i18n text field. This is currently being done for AtoM 2.7 DIP uploads, even though these values do not appear anywhere in the AtoM GUI.
             '''
@@ -292,9 +288,19 @@ def parse_mets_values():
                 print("Unable to match file format to a registry key for digital object " + file["object_uuid"] + ". Using `fmt/468 - ISO Disk Image` as best guess.")
                 ERROR_COUNT += 1
 
-            # if preservationCopyNormalizedAt is not None:
-                # preservationCopyFileName =
-                # preservationCopyFileSize =
+
+            # If this digital object has a preservation copy, retrieve its
+            # information.
+            if premis_object.relationship__relationship_sub_type == "is source of":
+                preservation_copy_uuid = object.relationship__related_object_identifier__related_object_identifier_value
+                preservation_file = mets.get_file(file_uuid=preservation_copy_uuid)
+                preservationCopyFileName = preservation_file.label
+                for entry in preservation_file.get_premis_objects():
+                    preservationCopyFileSize = entry.size
+                for event in preservation_file.get_premis_events():
+                    if (event.event_type) == "creation":
+                        eventDate = (event.event_date_time)[:-13]
+                        preservationCopyNormalizedAt = datetime.strptime(eventDate, "%Y-%m-%dT%H:%M:%S")
 
             # Write the METS values to the MySQL working table.
             sql = "UPDATE dip_files SET originalFileIngestedAt = %s, relativePathWithinAip = %s, aipName = %s, originalFileName = %s, originalFileSize = %s, formatName = %s, formatVersion = %s, formatRegistryName = %s, formatRegistryKey = %s, preservationCopyNormalizedAt = %s, preservationCopyFileName = %s, preservationCopyFileSize = %s WHERE object_id = %s;"
