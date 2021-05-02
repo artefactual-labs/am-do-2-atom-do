@@ -292,15 +292,22 @@ def parse_mets_values():
             # If this digital object has a preservation copy, retrieve its
             # information.
             if premis_object.relationship__relationship_sub_type == "is source of":
-                preservation_copy_uuid = premis_object.relationship__related_object_identifier__related_object_identifier_value
-                preservation_file = mets.get_file(file_uuid=preservation_copy_uuid)
-                preservationCopyFileName = preservation_file.label
-                for entry in preservation_file.get_premis_objects():
-                    preservationCopyFileSize = entry.size
-                for event in preservation_file.get_premis_events():
-                    if (event.event_type) == "creation":
-                        eventDate = (event.event_date_time)[:-13]
-                        preservationCopyNormalizedAt = datetime.strptime(eventDate, "%Y-%m-%dT%H:%M:%S")
+                try:
+                    preservation_copy_uuid = premis_object.relationship__related_object_identifier__related_object_identifier_value
+                    preservation_file = mets.get_file(file_uuid=preservation_copy_uuid)
+                    preservationCopyFileName = preservation_file.label
+                    for entry in preservation_file.get_premis_objects():
+                        preservationCopyFileSize = entry.size
+                    for event in preservation_file.get_premis_events():
+                        if (event.event_type) == "creation":
+                            eventDate = (event.event_date_time)[:-13]
+                            preservationCopyNormalizedAt = datetime.strptime(eventDate, "%Y-%m-%dT%H:%M:%S")
+                except Exception as e:
+                    print("Unable to add preservation copy information for file " + file["object_uuid"] + ".")
+                    print(e)
+                    preservationCopyNormalizedAt = None
+                    preservationCopyFileName = None
+                    preservationCopyFileSize = None
 
             # Write the METS values to the MySQL working table.
             sql = "UPDATE dip_files SET originalFileIngestedAt = %s, relativePathWithinAip = %s, aipName = %s, originalFileName = %s, originalFileSize = %s, formatName = %s, formatVersion = %s, formatRegistryName = %s, formatRegistryKey = %s, preservationCopyNormalizedAt = %s, preservationCopyFileName = %s, preservationCopyFileSize = %s WHERE object_id = %s;"
