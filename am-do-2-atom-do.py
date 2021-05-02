@@ -72,13 +72,12 @@ def main():
     '''
 
     script_start = datetime.now().replace(microsecond=0)
-    print("am-do-2-atom-do script started at: " + script_start.strftime("%Y-%m-%d %H:%M:%S"))
-    print("--------")
+    print("Script started at: " + script_start.strftime("%Y-%m-%d %H:%M:%S"))
 
     print("Identifying legacy digital object records in AtoM...")
     legacy_count = flush_legacy_digital_file_properties()
 
-    sql = "SELECT COUNT(*) FROM digital_object;"
+    sql = "SELECT COUNT(*) FROM digital_object WHERE object_id IS NOT NULL;"
     mysqlCursor.execute(sql)
     total_count = mysqlCursor.fetchone()
 
@@ -91,9 +90,8 @@ def main():
     print("Cleaning up temporary files...")
     #delete_temporary_files()
 
-    print("--------")
     script_end = datetime.now().replace(microsecond=0)
-    print("am-do-2-atom-do script finished at: " + script_end.strftime("%Y-%m-%d %H:%M:%S"))
+    print("Script finished at: " + script_end.strftime("%Y-%m-%d %H:%M:%S"))
     duration = script_end - script_start
     print("Script duration: " + str(duration))
     print("Total number of digital objects in AtoM: " + str(total_count["COUNT(*)"]))
