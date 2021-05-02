@@ -1,4 +1,5 @@
 import os
+import shutil
 import sys
 import pymysql.cursors
 import requests
@@ -54,7 +55,6 @@ try:
     sql = "DROP TABLE IF EXISTS dip_files, premis_events;"
     mysqlCursor.execute(sql)
     mysqlConnection.commit()
-
     sql = "CREATE TABLE IF NOT EXISTS dip_files(object_id INTEGER PRIMARY KEY, object_uuid TEXT, aip_uuid TEXT, originalFileIngestedAt TEXT, relativePathWithinAip TEXT, aipName TEXT, originalFileName TEXT, originalFileSize TEXT, formatName TEXT, formatVersion TEXT, formatRegistryName TEXT, formatRegistryKey TEXT, preservationCopyNormalizedAt TEXT, preservationCopyFileName TEXT, preservationCopyFileSize TEXT);"
     mysqlCursor.execute(sql)
     sql = "CREATE TABLE IF NOT EXISTS premis_events(id INTEGER PRIMARY KEY, object_id INTEGER, value TEXT);"
@@ -88,7 +88,7 @@ def main():
     update_digital_file_properties()
 
     print("Cleaning up temporary files...")
-    #delete_temporary_files()
+    delete_temporary_files()
 
     script_end = datetime.now().replace(microsecond=0)
     print("Script finished at: " + script_end.strftime("%Y-%m-%d %H:%M:%S"))
@@ -341,8 +341,22 @@ def update_digital_file_properties():
         write_property(file["object_id"], "premisData", "formatRegistryName", file["formatRegistryName"], file["object_uuid"])
         write_property(file["object_id"], "premisData", "formatRegistryKey", file["formatRegistryKey"], file["object_uuid"])
 
+def delete_temporary_files():
+    try:
+        if os.path.exists(METS_DIR):
+            shutil.rmtree(METS_DIR)
+    except Exception as e:
+        print("Unable to delete the temporary METS file download directory.")
+        print(e)
 
-# delete working table. delete METS directory.
+    try:
+        sql = "DROP TABLE IF EXISTS dip_files, premis_events;"
+        mysqlCursor.execute(sql)
+        mysqlConnection.commit()
+    except Exception as e:
+        print("Unable to delete the working tables from the AtoM MySQL database.")
+        print(e)
+
 
 if __name__ == "__main__":
     main()
