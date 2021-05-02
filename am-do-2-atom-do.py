@@ -305,6 +305,7 @@ def parse_mets_values():
                 except Exception as e:
                     print("Unable to add preservation copy information for file " + file["object_uuid"] + ".")
                     print(e)
+                    ERROR_COUNT += 1
                     preservationCopyNormalizedAt = None
                     preservationCopyFileName = None
                     preservationCopyFileSize = None
