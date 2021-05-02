@@ -81,10 +81,10 @@ def main():
     mysqlCursor.execute(sql)
     total_count = mysqlCursor.fetchone()
 
-    print("Parsing values from METS files...")
+    print("Parsing digital object properties from Archivematica METS files...")
     parse_mets_values()
 
-    print("Updating digital file properties...")
+    print("Updating digital object properties in AtoM MySQL...")
     update_digital_file_properties()
 
     print("Cleaning up temporary files...")
