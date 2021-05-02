@@ -54,6 +54,7 @@ The enhanced digital object metadata and original file download feature will wor
 7.  A successful run includes all the following output:  
     ![image](images/successful_run.png)
 8. If the script encounters a fatal error it will report the reason and abort. If it encounters a processing error, it will report the error, add it to the error count, and continue processing. The script supports many error handling scenarios and its messages should provide enough detail to follow-up on any individual processing errors.
+9. After the script is run, all the AtoM 2.7 digital objects will automatically have enhanced digital object metadata display enabled. There is no need to do a SQL migration or search index upgrade. However, for the Download File feature to work, the AtoM administrator must enable the StorageService plugin and configure it's Archivematica Storage Service access priviliges in `Settings > Storage Service`.
 
 # Notes
 
