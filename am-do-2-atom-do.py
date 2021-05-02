@@ -11,6 +11,23 @@ STORAGE_SERVICE_URL = "http://dometadata.analyst.archivematica.net:8000/api/v2/"
 STORAGE_SERVICE_USER = "analyst"
 STORAGE_SERVICE_API_KEY = "ow7ioGh2reephua8uPaiWee4EiHeev6u"
 
+# Set and test MySQL connection.
+try:
+    # Configure AtoM MySQL connection.
+    mysqlConnection = pymysql.connect(
+        host="localhost",
+        user="atom-user",
+        password="ATOMPASSWORD",
+        db="atom",
+        charset="utf8mb4",
+        cursorclass=pymysql.cursors.DictCursor,
+    )
+    mysqlCursor = mysqlConnection.cursor()
+    print("Connected to AtoM MySQL database.")
+except Exception as e:
+    print(e)
+    sys.exit("Unable to connect to the AtoM MySQL database. Please check your connection parameters.")
+
 # Set METS download directory.
 METS_DIR = "DIP_METS/"
 
@@ -32,23 +49,6 @@ try:
 except Exception as e:
     print(e)
     sys.exit("Unable to connect to Archivematica Storage Service. Please check your connection parameters.")
-
-# Set and test MySQL connection.
-try:
-    # Configure AtoM MySQL connection.
-    mysqlConnection = pymysql.connect(
-        host="localhost",
-        user="atom-user",
-        password="ATOMPASSWORD",
-        db="atom",
-        charset="utf8mb4",
-        cursorclass=pymysql.cursors.DictCursor,
-    )
-    mysqlCursor = mysqlConnection.cursor()
-    print("Connected to AtoM MySQL database.")
-except Exception as e:
-    print(e)
-    sys.exit("Unable to connect to the AtoM MySQL database. Please check your connection parameters.")
 
 try:
     # Create a working table for transferring the legacy DIP file properties.
