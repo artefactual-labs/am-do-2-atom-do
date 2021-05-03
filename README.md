@@ -49,15 +49,23 @@ The enhanced digital object metadata and original file download feature will wor
     `$ source venv/bin/activate`   
 5. Install the script requirements:  
     `(venv)$ pip install -r requirements.txt`  
-6. At the very top of the script, update the Archivematica Storage Service and AtoM MySQL connection configuration information to match your environment.
+6. The script uses local environment variables to store secret login credentials for the AtoM MySQL database and Archivematica Storage Service. Either create these environment variables locally or write these login values directly into the script (see ~lines 10-21):  
+   ```
+   ARCHIVEMATICA_SS_URL
+   ARCHIVEMATICA_SS_USER
+   ARCHIVEMATICA_SS_KEY
+   ATOM_MYSQL_DATABASE
+   ATOM_MYSQL_USER
+   ATOM_MYSQL_PASSWORD
 7. Run the script:  
     `(venv)$ python am-do-2-atom-do.py`
 8.  A successful run includes all the following output:  
     ![image](images/successful_run.png)
-9. If the script encounters a fatal error it will report the reason and abort. If it encounters a processing error, it will report the error, add it to the error count, and continue processing. The goal is to complete the upgrade of the entire dataset without letting one or two data anomolies block the entire process. Instead, the script supports many error handling scenarios and its messages should provide enough detail to follow-up on any individual processing errors. Of course, if there is a very high error count that might indicate a more fundamental problem that needs to be resolved in the code.
-10. After the script is run, all the AtoM 2.7 digital objects will automatically have enhanced digital object metadata display enabled. There is no need to do a SQL migration or search index upgrade. However, for the Download File feature to work, the AtoM administrator must enable the StorageService plugin and configure its Archivematica Storage Service access priviliges in `Settings > Storage Service`.
-11. Restore from backup in case of any unforeseen, catastrophic errors:  
-   `$mysql -u atom-user -p atom < 2.7.dump.sql`  
+9. If the script encounters a fatal error it will report the reason and abort. 
+10. If the script encounters a processing error, it will report the error, add it to the error count, and continue processing. The goal is to complete the upgrade of the entire dataset without letting one or two data anomolies block the entire process. Instead, the script supports many error handling scenarios and its messages should provide enough detail to follow-up on any individual processing errors. Of course, if there is a very high error count that might indicate a more fundamental problem that needs to be resolved in the code.
+11. After the script is run, all the AtoM 2.7 digital objects will automatically have enhanced digital object metadata display enabled. There is no need to do a SQL migration or search index upgrade. However, for the Download File feature to work, the AtoM administrator must enable the StorageService plugin and configure its Archivematica Storage Service access priviliges in `Settings > Storage Service`.
+12. Restore from backup in case of any unforeseen, catastrophic errors:  
+   `$ mysql -u atom-user -p atom < 2.7.dump.sql`  
       
 
 # Notes
