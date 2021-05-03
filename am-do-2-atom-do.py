@@ -7,18 +7,18 @@ import metsrw
 from datetime import datetime
 
 # Set Archivematica Storage Service parameters.
-STORAGE_SERVICE_URL = "http://dometadata.analyst.archivematica.net:8000/api/v2/"
-STORAGE_SERVICE_USER = "analyst"
-STORAGE_SERVICE_API_KEY = "ow7ioGh2reephua8uPaiWee4EiHeev6u"
+STORAGE_SERVICE_URL = os.getenv('ARCHIVEMATICA_SS_URL')
+STORAGE_SERVICE_USER = os.getenv('ARCHIVEMATICA_SS_USER')
+STORAGE_SERVICE_API_KEY = os.getenv('ARCHIVEMATICA_SS_KEY')
 
 # Set and test MySQL connection.
 try:
     # Configure AtoM MySQL connection.
     mysqlConnection = pymysql.connect(
         host="localhost",
-        user="atom-user",
-        password="ATOMPASSWORD",
-        db="atom",
+        user=os.getenv('ATOM_MYSQL_USER'),
+        password=os.getenv('ATOM_MYSQL_PASSWORD'),
+        db=os.getenv('ATOM_MYSQL_DATABASE'),
         charset="utf8mb4",
         cursorclass=pymysql.cursors.DictCursor,
     )
