@@ -104,8 +104,8 @@ def main():
         sys.exit("Unable to query the working table.")
     while legacy_dip_file:
         parse_mets_values(legacy_dip_file["aip_uuid"])
-        sql = "SELECT * FROM dip_files;"
-        mysqlCursor.execute(sql)
+        sql = "SELECT * FROM dip_files WHERE parsed = %s;"
+        mysqlCursor.execute(sql, False)
         legacy_dip_file = mysqlCursor.fetchone()
 
     print("Updating digital object properties in AtoM MySQL...")
