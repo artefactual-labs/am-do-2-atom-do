@@ -74,12 +74,19 @@ def main():
     script_start = datetime.now().replace(microsecond=0)
     print("Script started at: " + script_start.strftime("%Y-%m-%d %H:%M:%S"))
 
-    print("Identifying legacy digital object records in AtoM...")
-    legacy_count = flush_legacy_digital_file_properties()
-
+    # Count total number of digital objects in AtoM.
     sql = "SELECT COUNT(*) FROM digital_object WHERE object_id IS NOT NULL;"
     mysqlCursor.execute(sql)
     total_count = mysqlCursor.fetchone()
+
+    # Count total number of 'legacy' digital objects in AtoM.
+    sql = "SELECT * FROM property WHERE name='objectUUID' AND scope is NULL;"
+    mysqlCursor.execute(sql)
+    legacy_dip_files = mysqlCursor.fetchall()
+    legacy_count = len(legacy_dip_files)
+
+    print("Identifying legacy digital object records in AtoM...")
+    flush_legacy_digital_file_properties(legacy_dip_files)
 
     print("Parsing digital object properties from Archivematica METS files...")
     parse_mets_values()
@@ -99,14 +106,8 @@ def main():
     print("Number of errors encountered: " + str(ERROR_COUNT))
 
 
-def flush_legacy_digital_file_properties():
+def flush_legacy_digital_file_properties(legacy_dip_files):
     global ERROR_COUNT
-
-    # Select all the legacy DIP files.
-    sql = "SELECT * FROM property WHERE name='objectUUID' AND scope is NULL;"
-    mysqlCursor.execute(sql)
-    legacy_dip_files = mysqlCursor.fetchall()
-    legacy_count = len(legacy_dip_files)
 
     for file in legacy_dip_files:
         try:
