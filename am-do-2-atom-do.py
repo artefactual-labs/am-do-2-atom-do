@@ -28,6 +28,11 @@ except Exception as e:
     print(e)
     sys.exit("Unable to connect to the AtoM MySQL database. Please check your connection parameters.")
 
+# Delete temporary MySQL working table and METS download directory?
+# This is False by default as this info may be useful for any post-script
+# auditing and can easily be deleted manually.
+DELETE_TEMP_FILES = False
+
 # Set METS download directory.
 METS_DIR = "DIP_METS/"
 
@@ -50,12 +55,12 @@ except Exception as e:
     print(e)
     sys.exit("Unable to connect to Archivematica Storage Service. Please check your connection parameters.")
 
+# Create a working table for transferring the legacy DIP file properties.
 try:
-    # Create a working table for transferring the legacy DIP file properties.
     sql = "DROP TABLE IF EXISTS dip_files, premis_events;"
     mysqlCursor.execute(sql)
     mysqlConnection.commit()
-    sql = "CREATE TABLE IF NOT EXISTS dip_files(object_id INTEGER PRIMARY KEY, object_uuid TEXT, aip_uuid TEXT, originalFileIngestedAt TEXT, relativePathWithinAip TEXT, aipName TEXT, originalFileName TEXT, originalFileSize TEXT, formatName TEXT, formatVersion TEXT, formatRegistryName TEXT, formatRegistryKey TEXT, preservationCopyNormalizedAt TEXT, preservationCopyFileName TEXT, preservationCopyFileSize TEXT);"
+    sql = "CREATE TABLE IF NOT EXISTS dip_files(object_id INTEGER PRIMARY KEY, object_uuid TEXT, aip_uuid TEXT, originalFileIngestedAt TEXT, relativePathWithinAip TEXT, aipName TEXT, originalFileName TEXT, originalFileSize TEXT, formatName TEXT, formatVersion TEXT, formatRegistryName TEXT, formatRegistryKey TEXT, preservationCopyNormalizedAt TEXT, preservationCopyFileName TEXT, preservationCopyFileSize TEXT, parsed BOOLEAN);"
     mysqlCursor.execute(sql)
     sql = "CREATE TABLE IF NOT EXISTS premis_events(id INTEGER PRIMARY KEY, object_id INTEGER, value TEXT);"
     mysqlCursor.execute(sql)
@@ -89,13 +94,28 @@ def main():
     flush_legacy_digital_file_properties(legacy_dip_files)
 
     print("Parsing digital object properties from Archivematica METS files...")
-    parse_mets_values()
+    try:
+        # Select next unparsed legacy DIP file record from the working table.
+        sql = "SELECT * FROM dip_files WHERE parsed = %s;"
+        mysqlCursor.execute(sql, False)
+        legacy_dip_file = mysqlCursor.fetchone()
+    except Exception as e:
+        print(e)
+        sys.exit("Unable to query the working table.")
+    while legacy_dip_file:
+        parse_mets_values(legacy_dip_file["aip_uuid"])
+        sql = "SELECT * FROM dip_files;"
+        mysqlCursor.execute(sql)
+        legacy_dip_file = mysqlCursor.fetchone()
 
     print("Updating digital object properties in AtoM MySQL...")
     update_digital_file_properties()
 
-    print("Cleaning up temporary files...")
-    delete_temporary_files()
+    if DELETE_TEMP_FILES:
+        print("Cleaning up temporary files...")
+        delete_temporary_files()
+    else:
+        print("Keeping temporary files. See `dip_files` table in the MySQL database and the " + METS_DIR + " directory for downloaded METS files.")
 
     script_end = datetime.now().replace(microsecond=0)
     print("Script finished at: " + script_end.strftime("%Y-%m-%d %H:%M:%S"))
@@ -139,8 +159,8 @@ def flush_legacy_digital_file_properties(legacy_dip_files):
 
         try:
             # Store identifier values in the working table.
-            sql = "INSERT INTO dip_files (object_id, object_uuid, aip_uuid) VALUES (%s, %s, %s);"
-            mysqlCursor.execute(sql, (file['object_id'], object_uuid['value'], aip_uuid['value']))
+            sql = "INSERT INTO dip_files (object_id, object_uuid, aip_uuid, parsed) VALUES (%s, %s, %s, %s);"
+            mysqlCursor.execute(sql, (file['object_id'], object_uuid['value'], aip_uuid['value'], False))
             mysqlConnection.commit()
         except Exception as e:
             print("Unable to insert working data for object# " + str(file['id']) + ". Skipping...")
@@ -161,7 +181,7 @@ def flush_legacy_digital_file_properties(legacy_dip_files):
             ERROR_COUNT += 1
             continue
 
-    return legacy_count
+    return
 
 
 def get_mets_path(aip_uuid):
@@ -198,52 +218,64 @@ def get_mets_file(aip_uuid, relative_path):
         file.write(response.content)
 
 
-def parse_mets_values():
+def parse_mets_values(aip_uuid):
     global ERROR_COUNT
+
+    # Identify all AtoM digital objects in this Archivematica AIP.
     try:
-        # Select all the legacy DIP file records from the working table.
-        sql = "SELECT * FROM dip_files;"
-        mysqlCursor.execute(sql)
+        sql = "SELECT * FROM dip_files WHERE aip_uuid = %s;"
+        mysqlCursor.execute(sql, aip_uuid)
         legacy_dip_files = mysqlCursor.fetchall()
     except Exception as e:
+        print("Unable to fetch the digital object records associated with AIP " + aip_uuid)
         print(e)
-        sys.exit("Unable to select files from working table.")
+        return
+
+    # Download METS file if a local copy is not present.
+    if os.path.exists(METS_DIR + aip_uuid + ".xml") is False:
+        try:
+            path, transfer_name = get_mets_path(aip_uuid)
+        except Exception as e:
+            print("Unable to derive relative path of METS file in package " + aip_uuid)
+            print(e)
+            ERROR_COUNT += 1
+            return
+        try:
+            get_mets_file(aip_uuid, path)
+        except Exception as e:
+            print("Unable to fetch METS file for package " + aip_uuid)
+            print(e)
+            ERROR_COUNT += 1
+            # Give up trying to update files from this AIP
+            for file in legacy_dip_files:
+                sql = "UPDATE dip_files SET parsed = %$ WHERE object_id = %s;"
+                mysqlCursor.execute(sql, True, file['object_id'])
+                mysqlConnection.commit()
+            return
+
+    # Read the METS file.
+    try:
+        mets = metsrw.METSDocument.fromfile(METS_DIR + "METS." + aip_uuid + ".xml")
+    except Exception as e:
+        print("METSRW is unable to parse the METS XML for package " + aip_uuid + ". Check your markup and see archivematica/issues#1129.")
+        print(e)
+        ERROR_COUNT += 1
+        # Give up trying to update files from this AIP
+        for file in legacy_dip_files:
+            sql = "UPDATE dip_files SET parsed = %$ WHERE object_id = %s;"
+            mysqlCursor.execute(sql, True, file['object_id'])
+            mysqlConnection.commit()
+        return
 
     for file in legacy_dip_files:
-        # Download METS file if a local copy is not present.
-        if os.path.exists(METS_DIR + file["aip_uuid"] + ".xml") is False:
-            try:
-                path, transfer_name = get_mets_path(file["aip_uuid"])
-            except Exception as e:
-                print("Unable to derive relative path of METS file in package " + file["aip_uuid"])
-                print(e)
-                ERROR_COUNT += 1
-                continue
-            try:
-                get_mets_file(file["aip_uuid"], path)
-            except Exception as e:
-                print("Unable to fetch METS file for package " + file["aip_uuid"])
-                print(e)
-                ERROR_COUNT += 1
-                continue
-
-        # Read the METS file.
-        try:
-            mets = metsrw.METSDocument.fromfile(METS_DIR + "METS." + file["aip_uuid"] + ".xml")
-        except Exception as e:
-            print("METSRW is unable to parse the METS XML for package " + file["aip_uuid"] + ". Check your markup and see archivematica/issues#1129.")
-            print(e)
-            ERROR_COUNT += 1
-            continue
-
         # Retrieve values for the current AtoM digital object from the METS.
         try:
-            fsentry = mets.get_file(file_uuid=file["object_uuid"])
+            fsentry = mets.get_file(file_uuid=file['object_uuid'])
         except Exception as e:
-            print("Unable to find metadata for file " + file["object_uuid"] + " in METS." + file["aip_uuid"] + ".xml")
+            print("Unable to find metadata for file " + file['object_uuid'] + " in METS." + aip_uuid + ".xml")
             print(e)
             ERROR_COUNT += 1
-            continue
+            return
 
         # Initialize all properties to Null to avoid missing value errors.
         originalFileIngestedAt = None
@@ -286,7 +318,7 @@ def parse_mets_values():
                 formatRegistryKey = "fmt/468"
 
                 print(e)
-                print("Unable to match file format to a registry key for digital object " + file["object_uuid"] + ". Using `fmt/468 - ISO Disk Image` as best guess.")
+                print("Unable to match file format to a registry key for digital object " + object_uuid + ". Using `fmt/468 - ISO Disk Image` as best guess.")
                 ERROR_COUNT += 1
 
 
@@ -304,7 +336,7 @@ def parse_mets_values():
                             eventDate = (event.event_date_time)[:-13]
                             preservationCopyNormalizedAt = datetime.strptime(eventDate, "%Y-%m-%dT%H:%M:%S")
                 except Exception as e:
-                    print("Unable to add preservation copy information for file " + file["object_uuid"] + ".")
+                    print("Unable to add preservation copy information for file " +object_uuid + ".")
                     print(e)
                     ERROR_COUNT += 1
                     preservationCopyNormalizedAt = None
@@ -312,8 +344,8 @@ def parse_mets_values():
                     preservationCopyFileSize = None
 
             # Write the METS values to the MySQL working table.
-            sql = "UPDATE dip_files SET originalFileIngestedAt = %s, relativePathWithinAip = %s, aipName = %s, originalFileName = %s, originalFileSize = %s, formatName = %s, formatVersion = %s, formatRegistryName = %s, formatRegistryKey = %s, preservationCopyNormalizedAt = %s, preservationCopyFileName = %s, preservationCopyFileSize = %s WHERE object_id = %s;"
-            mysqlCursor.execute(sql, (originalFileIngestedAt, relativePathWithinAip, aipName, originalFileName, originalFileSize, formatName, formatVersion, "PRONOM", formatRegistryKey, preservationCopyNormalizedAt, preservationCopyFileName, preservationCopyFileSize, file["object_id"]))
+            sql = "UPDATE dip_files SET originalFileIngestedAt = %s, relativePathWithinAip = %s, aipName = %s, originalFileName = %s, originalFileSize = %s, formatName = %s, formatVersion = %s, formatRegistryName = %s, formatRegistryKey = %s, preservationCopyNormalizedAt = %s, preservationCopyFileName = %s, preservationCopyFileSize = %s, parsed = %s WHERE object_uuid = %s;"
+            mysqlCursor.execute(sql, (originalFileIngestedAt, relativePathWithinAip, aipName, originalFileName, originalFileSize, formatName, formatVersion, "PRONOM", formatRegistryKey, preservationCopyNormalizedAt, preservationCopyFileName, preservationCopyFileSize, True, file['object_uuid']))
             mysqlConnection.commit()
 
 
