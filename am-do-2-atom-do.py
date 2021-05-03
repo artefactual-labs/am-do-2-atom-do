@@ -76,9 +76,6 @@ def main():
     METS to take full advantage of the digital object metadata enhancement and AIP/file retrieval features.
     '''
 
-    script_start = datetime.now().replace(microsecond=0)
-    print("Script started at: " + script_start.strftime("%Y-%m-%d %H:%M:%S"))
-
     # Count total number of digital objects in AtoM.
     sql = "SELECT COUNT(*) FROM digital_object WHERE object_id IS NOT NULL;"
     mysqlCursor.execute(sql)
@@ -89,6 +86,12 @@ def main():
     mysqlCursor.execute(sql)
     legacy_dip_files = mysqlCursor.fetchall()
     legacy_count = len(legacy_dip_files)
+
+    print("Total number of digital objects in AtoM: " + str(total_count["COUNT(*)"]))
+    print("Total number of 'legacy` digital objects to be updated: " + str(legacy_count))
+
+    script_start = datetime.now().replace(microsecond=0)
+    print("Script started at: " + script_start.strftime("%Y-%m-%d %H:%M:%S"))
 
     print("Identifying legacy digital object records in AtoM...")
     flush_legacy_digital_file_properties(legacy_dip_files)
@@ -121,8 +124,6 @@ def main():
     print("Script finished at: " + script_end.strftime("%Y-%m-%d %H:%M:%S"))
     duration = script_end - script_start
     print("Script duration: " + str(duration))
-    print("Total number of digital objects in AtoM: " + str(total_count["COUNT(*)"]))
-    print("Total number of 'legacy` digital objects updated: " + str(legacy_count))
     print("Number of errors encountered: " + str(ERROR_COUNT))
 
 
