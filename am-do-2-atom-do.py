@@ -6,19 +6,22 @@ import requests
 import metsrw
 from datetime import datetime
 
-# Set Archivematica Storage Service parameters.
-STORAGE_SERVICE_URL = os.getenv('ARCHIVEMATICA_SS_URL')
-STORAGE_SERVICE_USER = os.getenv('ARCHIVEMATICA_SS_USER')
-STORAGE_SERVICE_API_KEY = os.getenv('ARCHIVEMATICA_SS_KEY')
+# Set connection parameters.
+STORAGE_SERVICE_URL = ''
+STORAGE_SERVICE_USER = ''
+STORAGE_SERVICE_API_KEY = ''
+ATOM_MYSQL_USER = ''
+ATOM_MYSQL_PASSWORD = ''
+ATOM_MYSQL_DATABASE = ''
 
 # Set and test MySQL connection.
 try:
     # Configure AtoM MySQL connection.
     mysqlConnection = pymysql.connect(
         host="localhost",
-        user=os.getenv('ATOM_MYSQL_USER'),
-        password=os.getenv('ATOM_MYSQL_PASSWORD'),
-        db=os.getenv('ATOM_MYSQL_DATABASE'),
+        user=ATOM_MYSQL_USER,
+        password=ATOM_MYSQL_PASSWORD,
+        db=ATOM_MYSQL_DATABASE,
         charset="utf8mb4",
         cursorclass=pymysql.cursors.DictCursor,
     )
