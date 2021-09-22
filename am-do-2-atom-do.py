@@ -249,12 +249,11 @@ def parse_mets_values(aip_uuid):
             mets_file_status, request_url = get_mets_file(aip_uuid, path)
             if mets_file_status != 200:
                 print("Unable to fetch METS file for package " + aip_uuid)
-                print(request_url)
                 ERROR_COUNT += 1
                 # Give up trying to update files from this AIP
                 for file in legacy_dip_files:
                     sql = "UPDATE dip_files SET parsed = %$ WHERE object_id = %s;"
-                    mysqlCursor.execute(sql, True, file['object_id'])
+                    mysqlCursor.execute(sql, (True, file['object_id']))
                     mysqlConnection.commit()
                 return
         except Exception as e:
@@ -264,7 +263,7 @@ def parse_mets_values(aip_uuid):
             # Give up trying to update files from this AIP
             for file in legacy_dip_files:
                 sql = "UPDATE dip_files SET parsed = %$ WHERE object_id = %s;"
-                mysqlCursor.execute(sql, True, file['object_id'])
+                mysqlCursor.execute(sql, (True, file['object_id']))
                 mysqlConnection.commit()
             return
 
