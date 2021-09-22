@@ -216,11 +216,12 @@ def get_mets_path(aip_uuid):
 def get_mets_file(aip_uuid, relative_path):
     request_url = STORAGE_SERVICE_URL + "file/" + aip_uuid + "/extract_file/?relative_path_to_file=" + relative_path + "&username=" + STORAGE_SERVICE_USER + "&api_key=" + STORAGE_SERVICE_API_KEY
     response = requests.get(request_url)
-    mets_file = "METS.{}.xml".format(aip_uuid)
-    download_file = os.path.join(METS_DIR, mets_file)
-    with open(download_file, "wb") as file:
-        file.write(response.content)
-
+    if response.status_code == 200:
+        mets_file = "METS.{}.xml".format(aip_uuid)
+        download_file = os.path.join(METS_DIR, mets_file)
+        with open(download_file, "wb") as file:
+            file.write(response.content)
+    return (response.status_code)
 
 def parse_mets_values(aip_uuid):
     global ERROR_COUNT
@@ -245,7 +246,17 @@ def parse_mets_values(aip_uuid):
             ERROR_COUNT += 1
             return
         try:
-            get_mets_file(aip_uuid, path)
+            mets_file_status = get_mets_file(aip_uuid, path)
+            if mets_file_status != 200:
+                print("Unable to fetch METS file for package " + aip_uuid)
+                print(e)
+                ERROR_COUNT += 1
+                # Give up trying to update files from this AIP
+                for file in legacy_dip_files:
+                    sql = "UPDATE dip_files SET parsed = %$ WHERE object_id = %s;"
+                    mysqlCursor.execute(sql, True, file['object_id'])
+                    mysqlConnection.commit()
+                return
         except Exception as e:
             print("Unable to fetch METS file for package " + aip_uuid)
             print(e)
