@@ -221,7 +221,7 @@ def get_mets_file(aip_uuid, relative_path):
         download_file = os.path.join(METS_DIR, mets_file)
         with open(download_file, "wb") as file:
             file.write(response.content)
-    return (response.status_code)
+    return (response.status_code, request_url)
 
 def parse_mets_values(aip_uuid):
     global ERROR_COUNT
@@ -246,10 +246,10 @@ def parse_mets_values(aip_uuid):
             ERROR_COUNT += 1
             return
         try:
-            mets_file_status = get_mets_file(aip_uuid, path)
+            mets_file_status, request_url = get_mets_file(aip_uuid, path)
             if mets_file_status != 200:
                 print("Unable to fetch METS file for package " + aip_uuid)
-                print(e)
+                print(request_url)
                 ERROR_COUNT += 1
                 # Give up trying to update files from this AIP
                 for file in legacy_dip_files:
