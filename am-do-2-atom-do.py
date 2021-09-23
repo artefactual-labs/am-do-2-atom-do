@@ -171,20 +171,6 @@ def flush_legacy_digital_file_properties(legacy_dip_files):
             print(e)
             ERROR_COUNT += 1
             continue
-
-        try:
-            # Flush the existing properties for the legacy digital file.
-            # Includes an automatic cascade delete of the i18n value.
-            # These properties will be replaced with values from the METS file.
-            sql = "DELETE FROM property WHERE object_id = %s;"
-            mysqlCursor.execute(sql, file['object_id'])
-            mysqlConnection.commit()
-        except Exception as e:
-            print("Unable to flush existing property values for object# " + str(file['id']) + ". Skipping...")
-            print(e)
-            ERROR_COUNT += 1
-            continue
-
     return
 
 
@@ -367,6 +353,20 @@ def parse_mets_values(aip_uuid):
             sql = "UPDATE dip_files SET originalFileIngestedAt = %s, relativePathWithinAip = %s, aipName = %s, originalFileName = %s, originalFileSize = %s, formatName = %s, formatVersion = %s, formatRegistryName = %s, formatRegistryKey = %s, preservationCopyNormalizedAt = %s, preservationCopyFileName = %s, preservationCopyFileSize = %s, parsed = %s WHERE object_uuid = %s;"
             mysqlCursor.execute(sql, (originalFileIngestedAt, relativePathWithinAip, aipName, originalFileName, originalFileSize, formatName, formatVersion, "PRONOM", formatRegistryKey, preservationCopyNormalizedAt, preservationCopyFileName, preservationCopyFileSize, True, file['object_uuid']))
             mysqlConnection.commit()
+
+            # If the METS data was successfully parsed then we can finally
+            # delete the existing properties for the legacy digital file.
+            # This inncludes an automatic cascade delete of the i18n value.
+            # These properties will be replaced with values from the METS file.
+            try:
+                sql = "DELETE FROM property WHERE object_id = %s;"
+                mysqlCursor.execute(sql, file['object_id'])
+                mysqlConnection.commit()
+            except Exception as e:
+                print("Unable to flush existing property values for object# " + str(file['id']) + ". Skipping...")
+                print(e)
+                ERROR_COUNT += 1
+                continue
 
 
 def write_property(object_id, scope, name, value, object_uuid):
