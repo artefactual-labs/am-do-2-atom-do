@@ -221,6 +221,7 @@ def parse_mets_values(aip_uuid):
     except Exception as e:
         print("Unable to fetch the digital object records associated with AIP " + aip_uuid)
         print(e)
+
         return
 
     # Download METS file if a local copy is not present.
@@ -233,8 +234,8 @@ def parse_mets_values(aip_uuid):
             ERROR_COUNT += 1
             # Give up trying to update files from this AIP
             for file in legacy_dip_files:
-                sql = "UPDATE dip_files SET parsed = %s WHERE object_id = %s;"
-                mysqlCursor.execute(sql, (True, file['object_id']))
+                sql = "DELETE FROM dip_files WHERE object_id = %s;"
+                mysqlCursor.execute(sql, file['object_id'])
                 mysqlConnection.commit()
             return
         try:
@@ -244,8 +245,8 @@ def parse_mets_values(aip_uuid):
                 ERROR_COUNT += 1
                 # Give up trying to update files from this AIP
                 for file in legacy_dip_files:
-                    sql = "UPDATE dip_files SET parsed = %s WHERE object_id = %s;"
-                    mysqlCursor.execute(sql, (True, file['object_id']))
+                    sql = "DELETE FROM dip_files WHERE object_id = %s;"
+                    mysqlCursor.execute(sql, file['object_id'])
                     mysqlConnection.commit()
                 return
         except Exception as e:
@@ -254,8 +255,8 @@ def parse_mets_values(aip_uuid):
             ERROR_COUNT += 1
             # Give up trying to update files from this AIP
             for file in legacy_dip_files:
-                sql = "UPDATE dip_files SET parsed = %s WHERE object_id = %s;"
-                mysqlCursor.execute(sql, (True, file['object_id']))
+                sql = "DELETE FROM dip_files WHERE object_id = %s;"
+                mysqlCursor.execute(sql, file['object_id'])
                 mysqlConnection.commit()
             return
 
@@ -354,20 +355,6 @@ def parse_mets_values(aip_uuid):
             mysqlCursor.execute(sql, (originalFileIngestedAt, relativePathWithinAip, aipName, originalFileName, originalFileSize, formatName, formatVersion, "PRONOM", formatRegistryKey, preservationCopyNormalizedAt, preservationCopyFileName, preservationCopyFileSize, True, file['object_uuid']))
             mysqlConnection.commit()
 
-            # If the METS data was successfully parsed then we can finally
-            # delete the existing properties for the legacy digital file.
-            # This inncludes an automatic cascade delete of the i18n value.
-            # These properties will be replaced with values from the METS file.
-            try:
-                sql = "DELETE FROM property WHERE object_id = %s;"
-                mysqlCursor.execute(sql, file['object_id'])
-                mysqlConnection.commit()
-            except Exception as e:
-                print("Unable to flush existing property values for object# " + str(file['id']) + ". Skipping...")
-                print(e)
-                ERROR_COUNT += 1
-                continue
-
 
 def write_property(object_id, scope, name, value, object_uuid):
     global ERROR_COUNT
@@ -393,6 +380,17 @@ def update_digital_file_properties():
 
     # Loop over records in working table and insert updated property values.
     for file in legacy_dip_files:
+        # Deleting existing properties
+        try:
+            sql = "DELETE FROM property WHERE object_id = %s;"
+            mysqlCursor.execute(sql, file['object_id'])
+            mysqlConnection.commit()
+        except Exception as e:
+            print("Unable to flush existing property values for object# " + str(file['id']) + ". Skipping...")
+            print(e)
+            ERROR_COUNT += 1
+            continue
+        # Write new property values from METS values
         write_property(file["object_id"], "Archivematica AIP", "objectUUID", file["object_uuid"], file["object_uuid"])
         write_property(file["object_id"], "Archivematica AIP", "aipUUID", file["aip_uuid"], file["object_uuid"])
         write_property(file["object_id"], "Archivematica AIP", "relativePathWithinAip", file["relativePathWithinAip"], file["object_uuid"])
