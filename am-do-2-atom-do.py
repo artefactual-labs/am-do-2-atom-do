@@ -326,16 +326,15 @@ def parse_mets_values(aip_uuid):
                 # occurring on ISO formats in the sample data.
                 formatName = "ISO Disk Image File"
                 formatRegistryKey = "fmt/468"
-
                 print(e)
                 print("Unable to match file format to a registry key for digital object " + object_uuid + ". Using `fmt/468 - ISO Disk Image` as best guess.")
                 ERROR_COUNT += 1
-
+                continue
 
             # If this digital object has a preservation copy, retrieve its
             # information.
-            if premis_object.relationship__relationship_sub_type == "is source of":
-                try:
+            try:
+                if premis_object.relationship__relationship_sub_type == "is source of":
                     preservation_copy_uuid = premis_object.relationship__related_object_identifier__related_object_identifier_value
                     preservation_file = mets.get_file(file_uuid=preservation_copy_uuid)
                     preservationCopyFileName = preservation_file.label
@@ -345,13 +344,14 @@ def parse_mets_values(aip_uuid):
                         if (event.event_type) == "creation":
                             eventDate = (event.event_date_time)[:-13]
                             preservationCopyNormalizedAt = datetime.strptime(eventDate, "%Y-%m-%dT%H:%M:%S")
-                except Exception as e:
-                    print("Unable to add preservation copy information for file " +object_uuid + ".")
-                    print(e)
-                    ERROR_COUNT += 1
-                    preservationCopyNormalizedAt = None
-                    preservationCopyFileName = None
-                    preservationCopyFileSize = None
+            except Exception as e:
+                print("Unable to add preservation copy information for file " +object_uuid + ".")
+                print(e)
+                ERROR_COUNT += 1
+                preservationCopyNormalizedAt = None
+                preservationCopyFileName = None
+                preservationCopyFileSize = None
+                continue
 
             # Write the METS values to the MySQL working table.
             sql = "UPDATE dip_files SET originalFileIngestedAt = %s, relativePathWithinAip = %s, aipName = %s, originalFileName = %s, originalFileSize = %s, formatName = %s, formatVersion = %s, formatRegistryName = %s, formatRegistryKey = %s, preservationCopyNormalizedAt = %s, preservationCopyFileName = %s, preservationCopyFileSize = %s, parsed = %s WHERE object_uuid = %s;"
