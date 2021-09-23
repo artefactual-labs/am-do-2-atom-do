@@ -327,7 +327,7 @@ def parse_mets_values(aip_uuid):
                 formatName = "ISO Disk Image File"
                 formatRegistryKey = "fmt/468"
                 print(e)
-                print("Unable to match file format to a registry key for digital object " + object_uuid + ". Using `fmt/468 - ISO Disk Image` as best guess.")
+                print("Unable to match file format to a registry key for digital object " + file['object_uuid'] + ". Using `fmt/468 - ISO Disk Image` as best guess.")
                 ERROR_COUNT += 1
                 continue
 
@@ -342,10 +342,13 @@ def parse_mets_values(aip_uuid):
                         preservationCopyFileSize = entry.size
                     for event in preservation_file.get_premis_events():
                         if (event.event_type) == "creation":
-                            eventDate = (event.event_date_time)[:-13]
+                            if len(premis_event.event_date_time) > 19:
+                                eventDate = (event.event_date_time)[:-13]
+                            else:
+                                eventDate = event.event_date_time
                             preservationCopyNormalizedAt = datetime.strptime(eventDate, "%Y-%m-%dT%H:%M:%S")
             except Exception as e:
-                print("Unable to add preservation copy information for file " +object_uuid + ".")
+                print("Unable to add preservation copy information for file " + file['object_uuid'] + ".")
                 print(e)
                 ERROR_COUNT += 1
                 preservationCopyNormalizedAt = None
