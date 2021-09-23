@@ -223,6 +223,7 @@ def get_mets_file(aip_uuid, relative_path):
             file.write(response.content)
     return (response.status_code, request_url)
 
+
 def parse_mets_values(aip_uuid):
     global ERROR_COUNT
 
@@ -244,6 +245,11 @@ def parse_mets_values(aip_uuid):
             print("Unable to derive relative path of METS file in package " + aip_uuid)
             print(e)
             ERROR_COUNT += 1
+            # Give up trying to update files from this AIP
+            for file in legacy_dip_files:
+                sql = "UPDATE dip_files SET parsed = %s WHERE object_id = %s;"
+                mysqlCursor.execute(sql, (True, file['object_id']))
+                mysqlConnection.commit()
             return
         try:
             mets_file_status, request_url = get_mets_file(aip_uuid, path)
@@ -252,9 +258,8 @@ def parse_mets_values(aip_uuid):
                 ERROR_COUNT += 1
                 # Give up trying to update files from this AIP
                 for file in legacy_dip_files:
-                    object_id = file['object_id']
-                    sql = "UPDATE dip_files SET parsed = %$ WHERE object_id = %s;"
-                    mysqlCursor.execute(sql, (True, object_id))
+                    sql = "UPDATE dip_files SET parsed = %s WHERE object_id = %s;"
+                    mysqlCursor.execute(sql, (True, file['object_id']))
                     mysqlConnection.commit()
                 return
         except Exception as e:
@@ -263,9 +268,8 @@ def parse_mets_values(aip_uuid):
             ERROR_COUNT += 1
             # Give up trying to update files from this AIP
             for file in legacy_dip_files:
-                object_id = file['object_id']
-                sql = "UPDATE dip_files SET parsed = %$ WHERE object_id = %s;"
-                mysqlCursor.execute(sql, (True, object_id))
+                sql = "UPDATE dip_files SET parsed = %s WHERE object_id = %s;"
+                mysqlCursor.execute(sql, (True, file['object_id']))
                 mysqlConnection.commit()
             return
 
@@ -278,7 +282,7 @@ def parse_mets_values(aip_uuid):
         ERROR_COUNT += 1
         # Give up trying to update files from this AIP
         for file in legacy_dip_files:
-            sql = "UPDATE dip_files SET parsed = %$ WHERE object_id = %s;"
+            sql = "UPDATE dip_files SET parsed = %s WHERE object_id = %s;"
             mysqlCursor.execute(sql, True, file['object_id'])
             mysqlConnection.commit()
         return
