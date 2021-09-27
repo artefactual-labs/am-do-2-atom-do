@@ -335,18 +335,19 @@ def parse_mets_values(aip_uuid):
             # information.
             try:
                 if premis_object.relationship__relationship_sub_type == "is source of":
-                    preservation_copy_uuid = premis_object.relationship__related_object_identifier__related_object_identifier_value
+                    preservation_copy_uuid = premis_object.relationship__related_object_identification__related_object_identifier_value
                     preservation_file = mets.get_file(file_uuid=preservation_copy_uuid)
-                    preservationCopyFileName = preservation_file.label
-                    for entry in preservation_file.get_premis_objects():
-                        preservationCopyFileSize = entry.size
-                    for event in preservation_file.get_premis_events():
-                        if (event.event_type) == "creation":
-                            if len(premis_event.event_date_time) > 19:
-                                eventDate = (event.event_date_time)[:-13]
-                            else:
-                                eventDate = event.event_date_time
-                            preservationCopyNormalizedAt = datetime.strptime(eventDate, "%Y-%m-%dT%H:%M:%S")
+                    if preservation_file is not None:
+                        preservationCopyFileName = preservation_file.label
+                        for entry in preservation_file.get_premis_objects():
+                            preservationCopyFileSize = entry.size
+                        for event in preservation_file.get_premis_events():
+                            if (event.event_type) == "creation":
+                                if len(premis_event.event_date_time) > 19:
+                                    eventDate = (event.event_date_time)[:-13]
+                                else:
+                                    eventDate = event.event_date_time
+                                preservationCopyNormalizedAt = datetime.strptime(eventDate, "%Y-%m-%dT%H:%M:%S")
             except Exception as e:
                 print("Unable to add preservation copy information for file " + file['object_uuid'] + ".")
                 print(e)
