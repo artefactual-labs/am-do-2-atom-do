@@ -302,10 +302,7 @@ def parse_mets_values(aip_uuid):
 
         for premis_event in fsentry.get_premis_events():
             if (premis_event.event_type) == "ingestion":
-                if len(premis_event.event_date_time) > 19:
-                    eventDate = (premis_event.event_date_time)[:-13]
-                else:
-                    eventDate = premis_event.event_date_time
+                eventDate = premis_event.event_date_time[0:19]
                 originalFileIngestedAt = datetime.strptime(eventDate, "%Y-%m-%dT%H:%M:%S")
             '''
             TODO: Add all PREMIS Events to AtoM MySQL database as a string array stored in a property_i18n text field. This is currently being done for AtoM 2.7 DIP uploads, even though these values do not appear anywhere in the AtoM GUI.
@@ -343,10 +340,7 @@ def parse_mets_values(aip_uuid):
                             preservationCopyFileSize = entry.size
                         for event in preservation_file.get_premis_events():
                             if (event.event_type) == "creation":
-                                if len(premis_event.event_date_time) > 19:
-                                    eventDate = (event.event_date_time)[:-13]
-                                else:
-                                    eventDate = event.event_date_time
+                                eventDate = event.event_date_time[0:19]
                                 preservationCopyNormalizedAt = datetime.strptime(eventDate, "%Y-%m-%dT%H:%M:%S")
             except Exception as e:
                 print("Unable to add preservation copy information for file " + file['object_uuid'] + ".")
