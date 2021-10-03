@@ -332,7 +332,10 @@ def parse_mets_values(aip_uuid):
             # information.
             try:
                 if premis_object.relationship__relationship_sub_type == "is source of":
-                    preservation_copy_uuid = premis_object.relationship__related_object_identification__related_object_identifier_value
+                    try:
+                        preservation_copy_uuid = premis_object.relationship__related_object_identification__related_object_identifier_value
+                    except AttributeError:
+                        preservation_copy_uuid = premis_object.relationship__related_object_identifier__related_object_identifier_value
                     preservation_file = mets.get_file(file_uuid=preservation_copy_uuid)
                     if preservation_file is not None:
                         preservationCopyFileName = preservation_file.label
