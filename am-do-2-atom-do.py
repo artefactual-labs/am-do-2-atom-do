@@ -48,7 +48,7 @@ ERROR_COUNT = 0
 
 # Test Storage Service connection
 try:
-    request_url = STORAGE_SERVICE_URL + "file/" + "?username=" + STORAGE_SERVICE_USER + "&api_key=" + STORAGE_SERVICE_API_KEY
+    request_url = STORAGE_SERVICE_URL + "?username=" + STORAGE_SERVICE_USER + "&api_key=" + STORAGE_SERVICE_API_KEY
     response = requests.get(request_url)
     if response.status_code != requests.codes.ok:
         sys.exit("Unable to connect to Archivematica Storage Service. Please check your connection parameters.")
